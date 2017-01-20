@@ -10,7 +10,7 @@ print img.dtype, img.shape  # Prints "uint8 (400, 248, 3)"
 # numpy broadcasting means that this leaves the red channel unchanged,
 # and multiplies the green and blue channels by 0.95 and 0.9
 # respectively.
-img_tinted = img * [1, 0.95, 0.9]
+img_tinted = img * [1, 0.35, 0.3]
 
 # Resize the tinted image to be 300 by 300 pixels.
 img_tinted = imresize(img_tinted, (300, 300))
