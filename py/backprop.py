@@ -4,58 +4,41 @@
 # See: http://cs231n.github.io/optimization-2/
 
 import numpy as np
+import math
 
 def evaluate(input):
 
-  # Perform back propagation to optimize max(3(x+2y),z)
+  # Perform back propagation to minimize (x-5)^2 + (y-3)^2
 
-  x,y,z = input
+  x,y = input
 
-  i1 = 2 * y
-  i2 = i1 + x
-  i3 = 3 * i2
-  i4 = max(z,i3)
-  result = i4
+  a1 = x - 5
+  a2 = math.pow(a1,2)
+  a3 = y - 3
+  a4 = math.pow(a3,2)
+  a5 = a2 + a4
+
+  result = a5
 
   # Perform backpropagation
 
-  # Define gradient variables j* corresponding to input nodes x,y,z and intermediate
-  # nodes i*.
+  bx = 0
+  by = 0
 
-  # 'Gradients add up at forks.'
-  #
-  # Initialize the gradients at the input variables (x,y,z) to zero, and
-  # when storing to them, add to the accumulators jx,jy,jz.
-  #
+  b5 = 1
 
-  jx = 0
-  jy = 0
-  jz = 0
+  b2 = b5
+  b4 = b5
 
-  # Backprop the result i4; it's always 1 (why?)
-  #
-  j4 = 1
+  b1 = b2 * (2 * a1)
 
-  # Backprop i4 (max)
-  #
-  jz += j4 * (j4 if z > i3 else 0)
-  j3 = j4 * (j4 if i3 > z else 0)
+  b3 = b4 * (2 * a3)
 
+  bx += b1
 
-  # Backprop i3 (3 * i2)
-  #
-  j2 = j3 * 3
+  by += b3
 
-  # Backprop i2 (i1 + x)
-  #
-  j1 = j2
-  jx += j2
-
-  # Backprop i1 (2 * y)
-  #
-  jy += 2 * j1
-
-  gradient = np.array([jx,jy,jz])
+  gradient = np.array([bx,by])
 
   return gradient,result
 
@@ -76,11 +59,13 @@ def optimize(input):
       break
 
     value_prev = value
-    location +=  gradient * speed
+
+    # We're minimizing, so move opposite to gradient direction
+    location +=  gradient * -speed
 
     iter += 1
-    if iter == 20:
+    if iter == 30:
       break
 
 
-optimize(np.array([5,2,12]))
+optimize(np.array([1,1]))
