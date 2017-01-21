@@ -8,4 +8,13 @@ def unpickle(file):
     return dict
 
 dict = unpickle('assets/cifar-10-batches-py/data_batch_1')
-print 'dict size:',dict
+
+image_index = 3
+
+data = dict['data']
+labels = dict['labels']
+image = data[image_index]
+label = labels[image_index]
+
+print "image:",image,"length:",image.size
+print "label:",label
