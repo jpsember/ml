@@ -3,7 +3,9 @@
 # Experiments with back propagation
 # See: http://cs231n.github.io/optimization-2/
 
-def gradient(input):
+import numpy as np
+
+def evaluate(input):
 
   # Perform back propagation to optimize max(3(x+2y),z)
 
@@ -13,8 +15,7 @@ def gradient(input):
   i2 = i1 + x
   i3 = 3 * i2
   i4 = max(z,i3)
-
-  print "Input:   ",[x,y,z]
+  result = i4
 
   # Perform backpropagation
 
@@ -54,11 +55,32 @@ def gradient(input):
   #
   jy += 2 * j1
 
-  gradient = [jx,jy,jz]
+  gradient = np.array([jx,jy,jz])
 
-  print "Gradient:",gradient
-  return gradient
-
-gradient([5,2,12])
+  return gradient,result
 
 
+def optimize(input):
+
+  speed = 0.1
+
+  location = input.astype(float)
+
+  iter = 0
+  while True:
+    gradient, value = evaluate(location)
+    print "loc :",location,"grad:",gradient,"val :",value
+
+    # If value hasn't changed much, stop iterations
+    if iter != 0 and abs(value - value_prev) < 1e-5:
+      break
+
+    value_prev = value
+    location +=  gradient * speed
+
+    iter += 1
+    if iter == 20:
+      break
+
+
+optimize(np.array([5,2,12]))
