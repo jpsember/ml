@@ -1,56 +1,64 @@
 #! /usr/bin/env python
 
-
 # Experiments with back propagation
 # See: http://cs231n.github.io/optimization-2/
 
-# Perform back propagation to optimize max(3(x+2y),z)
+def gradient(input):
 
-x,y,z = 5,2,12
+  # Perform back propagation to optimize max(3(x+2y),z)
 
-i1 = 2 * y
-i2 = i1 + x
-i3 = 3 * i2
-i4 = max(z,i3)
+  x,y,z = input
 
-print "Input:   ",[x,y,z]
+  i1 = 2 * y
+  i2 = i1 + x
+  i3 = 3 * i2
+  i4 = max(z,i3)
 
-# Perform backpropagation
+  print "Input:   ",[x,y,z]
 
-# Define gradient variables j* corresponding to input nodes x,y,z and intermediate
-# nodes i*.
+  # Perform backpropagation
 
-# 'Gradients add up at forks.'
-#
-# Initialize the gradients at the input variables (x,y,z) to zero, and
-# when storing to them, add to the accumulators jx,jy,jz.
-#
+  # Define gradient variables j* corresponding to input nodes x,y,z and intermediate
+  # nodes i*.
 
-jx = 0
-jy = 0
-jz = 0
+  # 'Gradients add up at forks.'
+  #
+  # Initialize the gradients at the input variables (x,y,z) to zero, and
+  # when storing to them, add to the accumulators jx,jy,jz.
+  #
 
-# Backprop the result i4; it's always 1 (why?)
-#
-j4 = 1
+  jx = 0
+  jy = 0
+  jz = 0
 
-# Backprop i4 (max)
-#
-jz += j4 * (j4 if z > i3 else 0)
-j3 = j4 * (j4 if i3 > z else 0)
+  # Backprop the result i4; it's always 1 (why?)
+  #
+  j4 = 1
+
+  # Backprop i4 (max)
+  #
+  jz += j4 * (j4 if z > i3 else 0)
+  j3 = j4 * (j4 if i3 > z else 0)
 
 
-# Backprop i3 (3 * i2)
-#
-j2 = j3 * 3
+  # Backprop i3 (3 * i2)
+  #
+  j2 = j3 * 3
 
-# Backprop i2 (i1 + x)
-#
-j1 = j2
-jx += j2
+  # Backprop i2 (i1 + x)
+  #
+  j1 = j2
+  jx += j2
 
-# Backprop i1 (2 * y)
-#
-jy += 2 * j1
+  # Backprop i1 (2 * y)
+  #
+  jy += 2 * j1
 
-print "Gradient:",[jx,jy,jz]
+  gradient = [jx,jy,jz]
+
+  print "Gradient:",gradient
+  return gradient
+
+gradient([5,2,12])
+
+
