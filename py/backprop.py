@@ -47,7 +47,7 @@ m2.link_to(n4)
 output = f.output_node("f",0,0)
 n4.link_to(output)
 
-print "output:",output.value()
+f.evaluate()
 
 f.make_dotfile()
 

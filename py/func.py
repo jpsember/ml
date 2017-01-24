@@ -12,6 +12,7 @@ class Node:
     self._gradient = None
     self._links_fwd = []
     self._links_bwd = []
+    self._label = None
 
   def __str__(self):
     s = self.label()
@@ -42,7 +43,18 @@ class Node:
     error("unimplemented calculate_gradient for "+dtype(self))
 
   def label(self):
-    return self.__class__.__name__
+    label = self._label
+    if label is None:
+      label = self.__class__.__name__
+    return label
+
+  def is_io(self):
+    return False
+
+  def set_label(self,label):
+    self._label = label
+
+
 
 
 class ConstNode(Node):
@@ -50,6 +62,7 @@ class ConstNode(Node):
   def __init__(self,value):
     Node.__init__(self)
     self._value = value
+    self.set_label(str(value))
 
   def calculate_value(self):
     sum = 0.
@@ -61,8 +74,11 @@ class ConstNode(Node):
     return str(self.value())
 
 
-
 class AddNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("+")
 
   def calculate_value(self):
     sum = 0.
@@ -70,11 +86,16 @@ class AddNode(Node):
       sum += node.value()
     return sum
 
+
 class InputNode(Node):
 
   def __init__(self,matrix,row,col):
     Node.__init__(self)
     self._value = matrix.item((row,col))
+
+  def is_io(self):
+    return True
+
 
 class OutputNode(Node):
 
@@ -89,7 +110,15 @@ class OutputNode(Node):
     self._matrix.itemset((self._row,self._col),input)
     return input
 
+  def is_io(self):
+    return True
+
+
 class MultiplyNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("*")
 
   def calculate_value(self):
     sum = None
@@ -101,21 +130,26 @@ class MultiplyNode(Node):
         sum *= value
     return sum
 
+
 class PowNode(Node):
 
   def __init__(self,power):
     Node.__init__(self)
     self.__power = power
+    self.set_label("^" + str(self.__power))
 
   def calculate_value(self):
     base = self._links_bwd[0].value()
     return math.pow(base,self.__power)
+
+
 
 class Func:
 
   def __init__(self):
     self._matrices = {}
     self._nodes = {}
+    self._node_set = None
 
   def add_input(self, name, matrix):
     error_if(self._matrices.has_key(name),name+" already exists")
@@ -132,6 +166,7 @@ class Func:
       matrix = self._matrices[name]
       node = InputNode(matrix,row,col)
       self._nodes[expr] = node
+      node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
 
   def output_node(self, name, row, col):
@@ -141,42 +176,56 @@ class Func:
       matrix = self._matrices[name]
       node = OutputNode(matrix,row,col)
       self._nodes[expr] = node
+      node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
+
+  def evaluate(self):
+    for node in self.node_set():
+      node.value()
+
+  def node_set(self):
+    """Build set of nodes as closure of graph"""
+    if self._node_set is None:
+      nodes = set()
+      self._node_names = {}
+      stack = self._nodes.values()
+      while len(stack) != 0:
+        node = stack.pop()
+        if not node in nodes:
+          nodes.add(node)
+          self._node_names[node] = str(len(self._node_names))
+          stack += node._links_bwd
+          stack += node._links_fwd
+      self._node_set = nodes
+    return self._node_set
 
   def make_dotfile(self):
 
     s ="digraph func {\n"
     s += "rankdir=\"LR\";\n"
 
-    # Build set of nodes as closure of graph
-
-    nodes = set()
-    node_names = {}
-    stack = self._nodes.values()
-    while len(stack) != 0:
-      node = stack.pop()
-      if not node in nodes:
-        nodes.add(node)
-        node_names[node] = str(len(node_names))
-        stack += node._links_bwd
-        stack += node._links_fwd
-
     # Generate dot file
 
-    for node in nodes:
-      name = node_names[node]
-      s += name + '[shape="box" label="'
+    for node in self.node_set():
+      name = self._node_names[node]
+      s += name + "["
+      shape = "box"
+      s += 'shape="' + shape + '" '
+      if node.is_io():
+        s += 'style=bold '
+      s += 'label="'
       s += node.label()
-      s += '\\n'
-      if node._value is not None:
-        s += str(node._value)
-      s += '\\n'
-      if node._gradient is not None:
-        s += str(node.gradient())
+      if node.__class__ != ConstNode:
+        s += '\\n\\n'
+        if node._value is not None:
+          s += str(node._value)
+        s += '\\n'
+        if node._gradient is not None:
+          s += str(node.gradient())
       s += '"];'
       s += "\n"
       for child in node._links_fwd:
-        s += name + " -> " + node_names[child] + ";\n"
+        s += name + " -> " + self._node_names[child] + ";\n"
     s += "}\n"
 
     text_file = open("func.dot","w")
