@@ -68,6 +68,14 @@ class AddNode(Node):
       sum += node.value()
     return sum
 
+class InputNode(Node):
+
+  def __init__(self,matrix,row,col):
+    Node.__init__(self)
+    self._matrix = matrix
+    self._row = row
+    self._col = col
+    self._value = matrix.item((row,col))
 
 
 class MultiplyNode(Node):
@@ -82,4 +90,31 @@ class MultiplyNode(Node):
         sum *= value
     return sum
 
+class PowNode(Node):
+
+  def __init__(self,power):
+    Node.__init__(self)
+    self.__power = power
+
+  def calculate_value(self):
+    base = self._links_bwd[0].value()
+    return math.pow(base,self.__power)
+
+class Func:
+
+  def __init__(self):
+    self._matrices = {}
+    self._nodes = {}
+
+  def add_input(self, name, matrix):
+    self._matrices[name] = matrix
+
+  def input_node(self, name, row, col):
+    expr = name+"_"+str(row)+","+str(col)
+    node = self._nodes.get(expr)
+    if node is None:
+      matrix = self._matrices[name]
+      node = InputNode(matrix,row,col)
+      self._nodes[expr] = node
+    return node
 
