@@ -72,11 +72,20 @@ class InputNode(Node):
 
   def __init__(self,matrix,row,col):
     Node.__init__(self)
+    self._value = matrix.item((row,col))
+
+class OutputNode(Node):
+
+  def __init__(self,matrix,row,col):
+    Node.__init__(self)
     self._matrix = matrix
     self._row = row
     self._col = col
-    self._value = matrix.item((row,col))
 
+  def calculate_value(self):
+    input = self._links_bwd[0].value()
+    self._matrix.itemset((self._row,self._col),input)
+    return input
 
 class MultiplyNode(Node):
 
@@ -107,6 +116,11 @@ class Func:
     self._nodes = {}
 
   def add_input(self, name, matrix):
+    error_if(self._matrices.has_key(name),name+" already exists")
+    self._matrices[name] = matrix
+
+  def add_output(self, name, matrix):
+    error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
 
   def input_node(self, name, row, col):
@@ -115,6 +129,15 @@ class Func:
     if node is None:
       matrix = self._matrices[name]
       node = InputNode(matrix,row,col)
+      self._nodes[expr] = node
+    return node
+
+  def output_node(self, name, row, col):
+    expr = name+"_"+str(row)+","+str(col)
+    node = self._nodes.get(expr)
+    if node is None:
+      matrix = self._matrices[name]
+      node = OutputNode(matrix,row,col)
       self._nodes[expr] = node
     return node
 

@@ -15,6 +15,7 @@ from func import *
 
 f = Func()
 f.add_input("w", mat(1,[.1,.1]))
+f.add_output("f", mat(1,[0]))
 
 x = f.input_node("w",0,0)
 y = f.input_node("w",1,0)
@@ -43,6 +44,9 @@ n4 = AddNode()
 n2.link_to(n4)
 m2.link_to(n4)
 
+output = f.output_node("f",0,0)
+n4.link_to(output)
 
-print "n4 value:",n4.value()
+
+print "output:",output.value()
 
