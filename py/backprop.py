@@ -5,67 +5,37 @@
 
 import numpy as np
 import math
-
-def evaluate(input):
-
-  # Perform back propagation to minimize (x-5)^2 + (y-3)^2
-
-  x,y = input
-
-  a1 = x - 5
-  a2 = math.pow(a1,2)
-  a3 = y - 3
-  a4 = math.pow(a3,2)
-  a5 = a2 + a4
-
-  result = a5
-
-  # Perform backpropagation
-
-  bx = 0
-  by = 0
-
-  b5 = 1
-
-  b2 = b5
-  b4 = b5
-
-  b1 = b2 * (2 * a1)
-
-  b3 = b4 * (2 * a3)
-
-  bx += b1
-
-  by += b3
-
-  gradient = np.array([bx,by])
-
-  return gradient,result
+from func import *
 
 
-def optimize(input):
+x = ConstNode(12)
+z = ConstNode(7)
 
-  speed = 0.1
+y = AddNode()
+x.link_to(y)
+z.link_to(y)
 
-  location = input.astype(float)
-
-  iter = 0
-  while True:
-    gradient, value = evaluate(location)
-    print "loc :",location,"grad:",gradient,"val :",value
-
-    # If value hasn't changed much, stop iterations
-    if iter != 0 and abs(value - value_prev) < 1e-5:
-      break
-
-    value_prev = value
-
-    # We're minimizing, so move opposite to gradient direction
-    location +=  gradient * -speed
-
-    iter += 1
-    if iter == 30:
-      break
+m = MultiplyNode()
+n = ConstNode(6)
+y.link_to(m)
+n.link_to(m)
 
 
-optimize(np.array([1,1]))
+print "Nodes, before evaluation:"
+print x
+print y
+print z
+print m
+print n
+
+m.value()
+
+print "Nodes, after evaluation:"
+print x
+print y
+print z
+print m
+print n
+
+
+
