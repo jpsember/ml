@@ -216,6 +216,22 @@ class Func:
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
 
+  def add(self, *input_nodes):
+    """Construct an AddNode to sum together a list of (two or more) input nodes"""
+    error_if(len(input_nodes) == 0)
+    adder = AddNode()
+    for input in input_nodes:
+      input.link_to(adder)
+    return adder
+
+  def mult(self, *input_nodes):
+    """Construct a MultiplyNode to multiply together a list of two input nodes"""
+    error_if(len(input_nodes) != 2)
+    multiplier = MultiplyNode()
+    for input in input_nodes:
+      input.link_to(multiplier)
+    return multiplier
+
   def evaluate(self):
     """Evaluate outputs of function (and all intermediate nodes),
     if not already done; also evaluate the gradient"""

@@ -19,13 +19,7 @@ x = f.input_node("w",0,0)
 y = f.input_node("w",1,0)
 z = f.input_node("w",2,0)
 
-n0 = AddNode()
-x.link_to(n0)
-y.link_to(n0)
-
-n1 = MultiplyNode()
-n0.link_to(n1)
-z.link_to(n1)
+n1 = f.mult(f.add(x,y),z)
 
 output = f.output_node("f",0,0)
 n1.link_to(output)
