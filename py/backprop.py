@@ -32,5 +32,4 @@ n1.link_to(output)
 
 f.evaluate()
 
-f.make_dotfile()
-
+f.make_dotfile("x_plus_y_times_z")

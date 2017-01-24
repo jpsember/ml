@@ -239,7 +239,7 @@ class Func:
       self._node_set = nodes
     return self._node_set
 
-  def make_dotfile(self):
+  def make_dotfile(self, filename = "func"):
 
     s ="digraph func {\n"
     s += "rankdir=\"LR\";\n"
@@ -268,7 +268,7 @@ class Func:
         s += name + " -> " + self._node_names[child] + ";\n"
     s += "}\n"
 
-    text_file = open("func.dot","w")
+    text_file = open(filename + ".dot","w")
     text_file.write(s)
     text_file.close()
     return s
