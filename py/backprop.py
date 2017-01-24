@@ -19,10 +19,9 @@ x = f.input_node("w",0,0)
 y = f.input_node("w",1,0)
 z = f.input_node("w",2,0)
 
-n1 = f.mult(f.add(x,y),z)
-
 output = f.output_node("f",0,0)
-n1.link_to(output)
+
+f.connect(f.mult(f.add(x,y),z),output)
 
 f.evaluate()
 

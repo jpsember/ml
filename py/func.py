@@ -22,10 +22,6 @@ class Node:
       s += " grad:" + str(self.gradient())
     return s
 
-  def link_to(self,other):
-    self._links_fwd.append(other)
-    other._links_bwd.append(self)
-
   def value(self):
     if self._value is None:
       self._value = self.calculate_value()
@@ -127,6 +123,7 @@ class OutputNode(Node):
     self._matrix = matrix
     self._row = row
     self._col = col
+    self._gradient = 1.0
 
   def calculate_value(self):
     input = self.input().value()
@@ -134,7 +131,6 @@ class OutputNode(Node):
     return input
 
   def calculate_gradients(self):
-    self._gradient = 1.0
     for node in self._links_bwd:
       node._gradient = 1.0
 
@@ -188,6 +184,10 @@ class Func:
     self._nodes = {}
     self._node_set = None
 
+  def connect(self, inp_node, out_node):
+    inp_node._links_fwd.append(out_node)
+    out_node._links_bwd.append(inp_node)
+
   def add_input(self, name, matrix):
     error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
@@ -220,16 +220,16 @@ class Func:
     """Construct an AddNode to sum together a list of (two or more) input nodes"""
     error_if(len(input_nodes) == 0)
     adder = AddNode()
-    for input in input_nodes:
-      input.link_to(adder)
+    for inp in input_nodes:
+      self.connect(inp,adder)
     return adder
 
   def mult(self, *input_nodes):
     """Construct a MultiplyNode to multiply together a list of two input nodes"""
     error_if(len(input_nodes) != 2)
     multiplier = MultiplyNode()
-    for input in input_nodes:
-      input.link_to(multiplier)
+    for inp in input_nodes:
+      self.connect(inp,multiplier)
     return multiplier
 
   def evaluate(self):
