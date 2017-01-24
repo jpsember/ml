@@ -8,21 +8,19 @@ import math
 from func import *
 
 
-# Let's build a function to evaluate (x+y)z  (from the lecture notes)
-# at [-2,5,-4]
-
 f = Func()
-f.add_input("w", mat(1,[-2,5,-4]))
+f.add_input("w", mat(1,[0,0]))
 f.add_output("f", mat(1,[0]))
 
-x = f.input_node("w",0,0)
-y = f.input_node("w",1,0)
-z = f.input_node("w",2,0)
+x = f.input_node("w",0)
+y = f.input_node("w",1)
 
-output = f.output_node("f",0,0)
+n = f.add(f.square(f.add(x,f.const(-5))),f.square(f.add(y,f.const(-3))))
 
-f.connect(f.mult(f.add(x,y),z),output)
+output = f.output_node("f")
+
+f.connect(n,output)
 
 f.evaluate()
 
-f.make_dotfile("x_plus_y_times_z")
+f.make_dotfile("quadratic")

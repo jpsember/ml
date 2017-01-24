@@ -196,7 +196,7 @@ class Func:
     error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
 
-  def input_node(self, name, row, col):
+  def input_node(self, name, row, col = 0):
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
@@ -206,7 +206,7 @@ class Func:
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
 
-  def output_node(self, name, row, col):
+  def output_node(self, name, row=0, col=0):
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
@@ -231,6 +231,16 @@ class Func:
     for inp in input_nodes:
       self.connect(inp,multiplier)
     return multiplier
+
+  def const(self, value):
+    """Construct a ConstNode"""
+    return ConstNode(value)
+
+  def square(self, input_node):
+    """Construct a PowNode to square inputs"""
+    operator = PowNode(2)
+    self.connect(input_node,operator)
+    return operator
 
   def evaluate(self):
     """Evaluate outputs of function (and all intermediate nodes),
