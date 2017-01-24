@@ -258,13 +258,13 @@ class Func:
   def make_dotfile(self, filename = "func"):
 
     s ="digraph func {\n"
-    s += "rankdir=\"LR\";\n"
+    s += "rankdir=\"LR\";\n\n"
 
     # Generate dot file
 
     for node in self.node_set():
       name = self._node_names[node]
-      s += name + "["
+      s += "  " + name + "["
       shape = "box"
       s += 'shape="' + shape + '" '
       if node.is_io():
@@ -281,7 +281,8 @@ class Func:
       s += '"];'
       s += "\n"
       for child in node._links_fwd:
-        s += name + " -> " + self._node_names[child] + ";\n"
+        s += "  " + name + " -> " + self._node_names[child] + ";\n"
+      s += "\n"
     s += "}\n"
 
     text_file = open(filename + ".dot","w")
