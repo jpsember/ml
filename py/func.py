@@ -36,11 +36,14 @@ class Node:
 
   def gradient(self):
     if self._gradient is None:
-      self._gradient = self.calculate_gradient()
+      # Ask child node to calculate its gradient
+      self.output().calculate_gradients()
+      # self._gradient = self.calculate_gradient()
     return self._gradient
 
-  def calculate_gradient(self):
-    error("unimplemented calculate_gradient for "+dtype(self))
+  def calculate_gradients(self):
+    """Calculate this node's gradient, plus those of its parent nodes"""
+    error("unimplemented calculate_gradients for "+dtype(self))
 
   def label(self):
     label = self._label
@@ -53,6 +56,18 @@ class Node:
 
   def set_label(self,label):
     self._label = label
+
+  def inputs(self):
+    return len(self._links_bwd)
+
+  def input(self, index = 0):
+    return self._links_bwd[index]
+
+  def outputs(self):
+    return len(self._links_fwd)
+
+  def output(self, index = 0):
+    return self._links_fwd[index]
 
 
 
@@ -73,6 +88,10 @@ class ConstNode(Node):
   def __str__(self):
     return str(self.value())
 
+  def gradient(self):
+    return 0.0
+
+
 
 class AddNode(Node):
 
@@ -85,6 +104,10 @@ class AddNode(Node):
     for node in self._links_bwd:
       sum += node.value()
     return sum
+
+  def calculate_gradients(self):
+    for node in self._links_bwd:
+      node._gradient = self.gradient()
 
 
 class InputNode(Node):
@@ -106,9 +129,14 @@ class OutputNode(Node):
     self._col = col
 
   def calculate_value(self):
-    input = self._links_bwd[0].value()
+    input = self.input().value()
     self._matrix.itemset((self._row,self._col),input)
     return input
+
+  def calculate_gradients(self):
+    self._gradient = 1.0
+    for node in self._links_bwd:
+      node._gradient = 1.0
 
   def is_io(self):
     return True
@@ -130,18 +158,27 @@ class MultiplyNode(Node):
         sum *= value
     return sum
 
+  def calculate_gradients(self):
+    self.input(0)._gradient = self.gradient() * self.input(1).value()
+    self.input(1)._gradient = self.gradient() * self.input(0).value()
+
+
+
 
 class PowNode(Node):
 
   def __init__(self,power):
     Node.__init__(self)
-    self.__power = power
-    self.set_label("^" + str(self.__power))
+    self._power = power
+    self.set_label("^" + str(self._power))
 
   def calculate_value(self):
     base = self._links_bwd[0].value()
-    return math.pow(base,self.__power)
+    return math.pow(self.input().value(),self._power)
 
+  def calculate_gradients(self):
+    node = self.input()
+    node._gradient = self.gradient() * self._power * math.pow(node.value(),self._power - 1)
 
 
 class Func:
@@ -180,8 +217,11 @@ class Func:
     return node
 
   def evaluate(self):
+    """Evaluate outputs of function (and all intermediate nodes),
+    if not already done; also evaluate the gradient"""
     for node in self.node_set():
       node.value()
+      node.gradient()
 
   def node_set(self):
     """Build set of nodes as closure of graph"""
