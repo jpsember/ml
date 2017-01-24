@@ -14,7 +14,7 @@ class Node:
     self._links_bwd = []
 
   def __str__(self):
-    s = self.__class__.__name__
+    s = self.label()
     if self._value is not None:
       s += " value:" + str(self.value())
     if self._gradient is not None:
@@ -41,6 +41,8 @@ class Node:
   def calculate_gradient(self):
     error("unimplemented calculate_gradient for "+dtype(self))
 
+  def label(self):
+    return self.__class__.__name__
 
 
 class ConstNode(Node):
@@ -141,3 +143,43 @@ class Func:
       self._nodes[expr] = node
     return node
 
+  def make_dotfile(self):
+
+    s ="digraph func {\n"
+    s += "rankdir=\"LR\";\n"
+
+    # Build set of nodes as closure of graph
+
+    nodes = set()
+    node_names = {}
+    stack = self._nodes.values()
+    while len(stack) != 0:
+      node = stack.pop()
+      if not node in nodes:
+        nodes.add(node)
+        node_names[node] = str(len(node_names))
+        stack += node._links_bwd
+        stack += node._links_fwd
+
+    # Generate dot file
+
+    for node in nodes:
+      name = node_names[node]
+      s += name + '[shape="box" label="'
+      s += node.label()
+      s += '\\n'
+      if node._value is not None:
+        s += str(node._value)
+      s += '\\n'
+      if node._gradient is not None:
+        s += str(node.gradient())
+      s += '"];'
+      s += "\n"
+      for child in node._links_fwd:
+        s += name + " -> " + node_names[child] + ";\n"
+    s += "}\n"
+
+    text_file = open("func.dot","w")
+    text_file.write(s)
+    text_file.close()
+    return s
