@@ -8,44 +8,27 @@ import math
 from func import *
 
 
-# Let's build a function to minimize (x-5)^2 + (y-3)^2
-#
-# We'll set m = [x
-#                y]
+# Let's build a function to evaluate (x+y)z  (from the lecture notes)
+# at [-2,5,-4]
 
 f = Func()
-f.add_input("w", mat(1,[.1,.1]))
+f.add_input("w", mat(1,[-2,5,-4]))
 f.add_output("f", mat(1,[0]))
 
 x = f.input_node("w",0,0)
 y = f.input_node("w",1,0)
+z = f.input_node("w",2,0)
 
-n0 = ConstNode(-5)
+n0 = AddNode()
+x.link_to(n0)
+y.link_to(n0)
 
-n1 = AddNode()
-
+n1 = MultiplyNode()
 n0.link_to(n1)
-x.link_to(n1)
-
-n2 = PowNode(2)
-n1.link_to(n2)
-
-m0 = ConstNode(-3)
-
-m1 = AddNode()
-
-m0.link_to(m1)
-y.link_to(m1)
-
-m2 = PowNode(2)
-m1.link_to(m2)
-
-n4 = AddNode()
-n2.link_to(n4)
-m2.link_to(n4)
+z.link_to(n1)
 
 output = f.output_node("f",0,0)
-n4.link_to(output)
+n1.link_to(output)
 
 f.evaluate()
 
