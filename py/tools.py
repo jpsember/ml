@@ -113,3 +113,31 @@ def current_dir():
   Get absolute path of current directory, as unicode string
   """
   return os.path.abspath(unicode(os.curdir))
+
+
+
+import numpy as np
+import math
+
+# Helper method to build array with implicit type, explicit # columns
+
+def mat(ncols, arr):
+  """Build matrix (numpy array), given number of columns"""
+  a = np.array(arr,dtype=float)
+  a = a.reshape(a.size / ncols, ncols)
+  return a
+
+def vector(arr):
+  """Build vector (numpy array)"""
+  a = np.array(arr,dtype=float)
+  return a
+
+def row(matrix, row_number):
+  """Extract a row from a matrix"""
+  return matrix[row_number]
+
+def col(matrix, col_number):
+  """Extract column from matrix"""
+  return matrix[:,col_number]
+
+

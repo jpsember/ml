@@ -8,6 +8,8 @@
 
 import numpy as np
 import math
+from tools import *
+
 
 # Defining a matrix
 
@@ -31,14 +33,8 @@ a = a.reshape(3,5)
 
 print a
 
-# Helper method to build array with implicit type, explicit # columns
 
-def build_mat(ncols, arr):
-  a = np.array(arr,dtype=float)
-  a = a.reshape(a.size / ncols, ncols)
-  return a
-
-a = build_mat(5,[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14])
+a = mat(5,[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14])
 print a
 
 # Vector
@@ -61,16 +57,10 @@ print "second row: ",r
 c = a[:,1]
 print "second col: ",c
 
-# Helper methods to extract rows or columns
-# (is this a good idea, e.g., to have a level of abstraction above ndarray?)
-def row(matrix, row_number):
-  return matrix[row_number]
-
-def col(matrix, col_number):
-  return matrix[:,col_number]
-
 print "third row:", row(a,2)
 print "third col:", col(a,2)
 
 print "scalar product of rows 0 and 2:", np.dot(row(a,0), row(a,2))
+
+print "vector:", vector([1,2,3])
 
