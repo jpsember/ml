@@ -189,14 +189,23 @@ class Func:
     out_node._links_bwd.append(inp_node)
 
   def add_input(self, name, matrix):
+    """declare a matrix as an input, and generate corresponding input nodes"""
     error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
+    # Define nodes for individual elements
+    for row,col in np.ndindex(*matrix.shape):
+      self.inp(name,row,col)
 
   def add_output(self, name, matrix):
+    """declare a matrix as an output"""
     error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
+    # Define nodes for individual elements
+    for row,col in np.ndindex(*matrix.shape):
+      self.out(name,row,col)
 
-  def input_node(self, name, row, col = 0):
+  def inp(self, name, row, col = 0):
+    """get node (generating if necessary) corresponding to element of input matrix"""
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
@@ -206,7 +215,8 @@ class Func:
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
 
-  def output_node(self, name, row=0, col=0):
+  def out(self, name, row=0, col=0):
+    """get node (generating if necessary) corresponding to element of output matrix"""
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
