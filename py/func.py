@@ -213,6 +213,19 @@ class MatrixRecord:
     self._gradient = None
     self._nodes = None
 
+  @classmethod
+  def build_input(cls, name, matrix):
+    m = MatrixRecord(name,matrix)
+    m.create_gradient()
+    m.build_nodes(True)
+    return m
+
+  @classmethod
+  def build_output(cls, name, matrix):
+    m = MatrixRecord(name,matrix)
+    m.build_nodes(False)
+    return m
+
   def name(self):
     return self._name
 
@@ -264,9 +277,7 @@ class Func:
 
   def add_input(self, name, matrix):
     """declare a matrix as an input, and generate corresponding input nodes"""
-    m = self.add_matrix(name,matrix)
-    m.create_gradient()
-    m.build_nodes(True)
+    self.add_matrix(MatrixRecord.build_input(name,matrix))
 
   def get_gradient(self, name):
     m = self.get_matrix(name)
@@ -274,14 +285,12 @@ class Func:
 
   def add_output(self, name, matrix):
     """declare a matrix as an output"""
-    m = self.add_matrix(name,matrix)
-    m.build_nodes(False)
+    self.add_matrix(MatrixRecord.build_output(name,matrix))
 
-  def add_matrix(self, name, matrix):
+  def add_matrix(self, record):
+    name = record.name()
     error_if(self._matrix_records.has_key(name),name+" already exists")
-    record = MatrixRecord(name,matrix)
     self._matrix_records[name] = record
-    return record
 
   def get_matrix(self, name):
     return self._matrix_records[name]
@@ -355,6 +364,14 @@ class Func:
           stack += node._links_fwd
       self._node_set = nodes
     return self._node_set
+
+  def get_sorted_nodes(self):
+    """Build a topologically-sorted list of nodes"""
+    visitied_nodes = set()
+    sorted_nodes = []
+
+
+
 
   def make_dotfile(self, filename = "func"):
 
