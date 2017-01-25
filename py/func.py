@@ -203,10 +203,22 @@ class PowNode(Node):
     node.store_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
 
+# Stores information about a named input or output matrix
+#
+class MatrixRecord:
+
+  def __init__(self, name, matrix):
+    self._name = name
+    self._matrix = matrix
+
+  def matrix(self):
+    return self._matrix
+
+
 class Func:
 
   def __init__(self):
-    self._matrices = {}
+    self._matrix_records = {}
     self._nodes = {}
     self._node_set = None
 
@@ -216,32 +228,36 @@ class Func:
 
   def add_input(self, name, matrix):
     """declare a matrix as an input, and generate corresponding input nodes"""
-    error_if(self._matrices.has_key(name),name+" already exists")
-    self._matrices[name] = matrix
+    self.add_matrix(name,matrix)
     grad_name = self._gradient_matrix_name(name)
-    self._matrices[grad_name] = np.zeros_like(matrix)
+    self.add_matrix(grad_name,np.zeros_like(matrix))
     # Define nodes for individual elements
     for row,col in np.ndindex(*matrix.shape):
       self.inp(name,row,col)
 
   def get_gradient(self, name):
-    return self._matrices[self._gradient_matrix_name(name)]
+    return self._matrix_records[self._gradient_matrix_name(name)].matrix()
 
   def add_output(self, name, matrix):
     """declare a matrix as an output"""
-    error_if(self._matrices.has_key(name),name+" already exists")
-    self._matrices[name] = matrix
+    self.add_matrix(name,matrix)
     # Define nodes for individual elements
     for row,col in np.ndindex(*matrix.shape):
       self.out(name,row,col)
+
+  def add_matrix(self, name, matrix):
+    error_if(self._matrix_records.has_key(name),name+" already exists")
+    record = MatrixRecord(name,matrix)
+    self._matrix_records[name] = record
+    return record
 
   def inp(self, name, row, col = 0):
     """get node (generating if necessary) corresponding to element of input matrix"""
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
-      matrix = self._matrices[name]
-      grad_matrix = self._matrices[self._gradient_matrix_name(name)]
+      matrix = self._matrix_records[name].matrix()
+      grad_matrix = self._matrix_records[self._gradient_matrix_name(name)].matrix()
       node = InputNode(matrix,row,col,grad_matrix)
       self._nodes[expr] = node
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
@@ -252,7 +268,7 @@ class Func:
     expr = name+"_"+str(row)+","+str(col)
     node = self._nodes.get(expr)
     if node is None:
-      matrix = self._matrices[name]
+      matrix = self._matrix_records[name].matrix()
       node = OutputNode(matrix,row,col)
       self._nodes[expr] = node
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
