@@ -43,6 +43,10 @@ class Node:
   def store_gradient(self, gradient):
     self._gradient = gradient
 
+  def discard_eval(self):
+    self._gradient = None
+    self._value = None
+
   def label(self):
     label = self._label
     if label is None:
@@ -89,6 +93,10 @@ class ConstNode(Node):
   def gradient(self):
     return 0.0
 
+  def discard_eval(self):
+    pass
+
+
 
 
 class AddNode(Node):
@@ -114,6 +122,7 @@ class InputNode(Node):
     Node.__init__(self)
     self._row = row
     self._col = col
+    self._matrix = matrix
     self._matrix_grad = matrix_grad
     self._value = matrix.item((row,col))
 
@@ -124,6 +133,10 @@ class InputNode(Node):
     Node.store_gradient(self,gradient)
     self._matrix_grad.itemset((self._row,self._col),gradient)
 
+  def discard_eval(self):
+    # Reset value to input matrix
+    self._value = self._matrix.item((self._row,self._col))
+    self._gradient = None
 
 class OutputNode(Node):
 
@@ -145,6 +158,10 @@ class OutputNode(Node):
 
   def is_io(self):
     return True
+
+  def discard_eval(self):
+    # Don't discard the gradient (which is constant at 1.0)
+    self._value = None
 
 
 class MultiplyNode(Node):
@@ -266,6 +283,11 @@ class Func:
     operator = PowNode(2)
     self.connect(input_node,operator)
     return operator
+
+  def reset(self):
+    """Discard any previously cached evaluation values"""
+    for node in self.node_set():
+      node.discard_eval()
 
   def evaluate(self):
     """Evaluate outputs of function (and all intermediate nodes),
