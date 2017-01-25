@@ -34,12 +34,14 @@ class Node:
     if self._gradient is None:
       # Ask child node to calculate its gradient
       self.output().calculate_gradients()
-      # self._gradient = self.calculate_gradient()
     return self._gradient
 
   def calculate_gradients(self):
     """Calculate this node's gradient, plus those of its parent nodes"""
     error("unimplemented calculate_gradients for "+dtype(self))
+
+  def store_gradient(self, gradient):
+    self._gradient = gradient
 
   def label(self):
     label = self._label
@@ -103,17 +105,24 @@ class AddNode(Node):
 
   def calculate_gradients(self):
     for node in self._links_bwd:
-      node._gradient = self.gradient()
+      node.store_gradient(self.gradient())
 
 
 class InputNode(Node):
 
-  def __init__(self,matrix,row,col):
+  def __init__(self,matrix,row,col,matrix_grad):
     Node.__init__(self)
+    self._row = row
+    self._col = col
+    self._matrix_grad = matrix_grad
     self._value = matrix.item((row,col))
 
   def is_io(self):
     return True
+
+  def store_gradient(self, gradient):
+    Node.store_gradient(self,gradient)
+    self._matrix_grad.itemset((self._row,self._col),gradient)
 
 
 class OutputNode(Node):
@@ -123,7 +132,7 @@ class OutputNode(Node):
     self._matrix = matrix
     self._row = row
     self._col = col
-    self._gradient = 1.0
+    self.store_gradient(1.0)
 
   def calculate_value(self):
     input = self.input().value()
@@ -132,7 +141,7 @@ class OutputNode(Node):
 
   def calculate_gradients(self):
     for node in self._links_bwd:
-      node._gradient = 1.0
+      node.store_gradient(1.0)
 
   def is_io(self):
     return True
@@ -155,8 +164,8 @@ class MultiplyNode(Node):
     return sum
 
   def calculate_gradients(self):
-    self.input(0)._gradient = self.gradient() * self.input(1).value()
-    self.input(1)._gradient = self.gradient() * self.input(0).value()
+    self.input(0).store_gradient(self.gradient() * self.input(1).value())
+    self.input(1).store_gradient(self.gradient() * self.input(0).value())
 
 
 
@@ -174,7 +183,7 @@ class PowNode(Node):
 
   def calculate_gradients(self):
     node = self.input()
-    node._gradient = self.gradient() * self._power * math.pow(node.value(),self._power - 1)
+    node.store_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
 
 class Func:
@@ -192,9 +201,14 @@ class Func:
     """declare a matrix as an input, and generate corresponding input nodes"""
     error_if(self._matrices.has_key(name),name+" already exists")
     self._matrices[name] = matrix
+    grad_name = self._gradient_matrix_name(name)
+    self._matrices[grad_name] = np.zeros_like(matrix)
     # Define nodes for individual elements
     for row,col in np.ndindex(*matrix.shape):
       self.inp(name,row,col)
+
+  def get_gradient(self, name):
+    return self._matrices[self._gradient_matrix_name(name)]
 
   def add_output(self, name, matrix):
     """declare a matrix as an output"""
@@ -210,7 +224,8 @@ class Func:
     node = self._nodes.get(expr)
     if node is None:
       matrix = self._matrices[name]
-      node = InputNode(matrix,row,col)
+      grad_matrix = self._matrices[self._gradient_matrix_name(name)]
+      node = InputNode(matrix,row,col,grad_matrix)
       self._nodes[expr] = node
       node.set_label(name + "[" + str(row) + "," + str(col) + "]")
     return node
@@ -309,3 +324,7 @@ class Func:
     text_file.write(s)
     text_file.close()
     return s
+
+  @staticmethod
+  def _gradient_matrix_name(matrix_name):
+    return matrix_name + "_g"
