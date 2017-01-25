@@ -13,6 +13,7 @@ class Node:
     self._links_fwd = []
     self._links_bwd = []
     self._label = None
+    self._user = None
 
   def __str__(self):
     s = self.label()
@@ -21,6 +22,13 @@ class Node:
     if self._gradient is not None:
       s += " grad:" + str(self.gradient())
     return s
+
+  def set_user_value(self, value):
+    """Store a value for user usage, e.g., for marking nodes as visited during a sort"""
+    self._user = value
+
+  def user_value(self):
+    return self._user
 
   def value(self):
     if self._value is None:
@@ -365,15 +373,52 @@ class Func:
       self._node_set = nodes
     return self._node_set
 
+  def get_all_nodes(self):
+    """Build a list of all nodes in graph"""
+    # We will assume that every node in the graph is connected to an input or output
+    nodes = set()
+
+    stack = []
+    for rec in self._matrix_records.values():
+      for row in rec.get_nodes():
+        stack += row
+    while len(stack) != 0:
+      node = stack.pop()
+      if not node in nodes:
+        nodes.add(node)
+        stack += node._links_bwd
+        stack += node._links_fwd
+    return list(nodes)
+
   def get_sorted_nodes(self):
     """Build a topologically-sorted list of nodes"""
-    visitied_nodes = set()
-    sorted_nodes = []
 
+    all_nodes_list = self.get_all_nodes()
+    for node in all_nodes_list:
+      node.set_user_value(None)
 
+    top_sort = []
+    for node in all_nodes_list:
+      self.visit_node(node, top_sort)
+
+    sort_val = 0
+    for node in top_sort:
+      node.set_user_value(sort_val)
+      sort_val += 1
+    return top_sort
+
+  def visit_node(self, node, top_sort):
+    if node.user_value() is not None:
+      return
+    for parent in node._links_bwd:
+      self.visit_node(parent, top_sort)
+    node.set_user_value(True)
+    top_sort.append(node)
 
 
   def make_dotfile(self, filename = "func"):
+
+    self.get_sorted_nodes()
 
     s ="digraph func {\n"
     s += "rankdir=\"LR\";\n\n"
@@ -389,6 +434,13 @@ class Func:
         s += 'style=bold '
       s += 'label="'
       s += node.label()
+
+      # Include topological sort values
+      q = node.user_value()
+      if q is not None:
+        s += "(sort:" + str(q)+")"
+        s += '\\n'
+
       if node.__class__ != ConstNode:
         s += '\\n\\n'
         if node._value is not None:
