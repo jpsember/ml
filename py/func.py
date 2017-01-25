@@ -280,6 +280,7 @@ class Func:
     self._node_set = None
 
   def connect(self, inp_node, out_node):
+    self.ensure_prepared(False)
     inp_node._links_fwd.append(out_node)
     out_node._links_bwd.append(inp_node)
 
@@ -341,7 +342,21 @@ class Func:
     self.connect(input_node,operator)
     return operator
 
+  def ensure_prepared(self, state = True):
+    if state != self.prepared():
+      error("unexpected prepared state")
+
+  # Prepare graph for processing; no further structural changes can occur
+  def prepare(self):
+    self.ensure_prepared(False)
+    self.node_set()
+
+  def prepared(self):
+    return (self._node_set is not None)
+
   def evaluate(self):
+    self.ensure_prepared()
+
     """Evaluate outputs of function (and all intermediate nodes),
     including the gradient"""
     for node in self.node_set():
@@ -375,7 +390,9 @@ class Func:
 
   def get_all_nodes(self):
     """Build a list of all nodes in graph"""
-    # We will assume that every node in the graph is connected to an input or output
+    # We will assume that every node in the graph is connected to an input or output;
+    # and we ought to be able to assume that every node (including, e.g., constants)
+    # has a forward path to an output node
     nodes = set()
 
     stack = []
@@ -418,14 +435,14 @@ class Func:
 
   def make_dotfile(self, filename = "func"):
 
-    self.get_sorted_nodes()
+    node_list = self.get_sorted_nodes()
 
     s ="digraph func {\n"
     s += "rankdir=\"LR\";\n\n"
 
     # Generate dot file
 
-    for node in self.node_set():
+    for node in node_list:
       name = self._node_names[node]
       s += "  " + name + "["
       shape = "box"

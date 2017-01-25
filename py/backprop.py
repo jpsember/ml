@@ -25,6 +25,7 @@ y = f.inp("w",1)
 n = f.add(f.square(f.add(x,f.const(-5))),f.square(f.add(y,f.const(-3))))
 
 f.connect(n,f.out("f"))
+f.prepare()
 
 # Perform gradient descent iterations
 
