@@ -43,8 +43,8 @@ class Node:
   def gradient(self):
     return self._gradient
 
-  def store_gradient(self, gradient):
-    self._gradient = gradient
+  def add_to_gradient(self, amount):
+    self._gradient += amount
 
   def label(self):
     label = self._label
@@ -78,11 +78,6 @@ class ConstNode(Node):
   def __str__(self):
     return str(self.value())
 
-  def gradient(self):
-    return 0.0
-
-  def discard_eval(self):
-    pass
 
 
 
@@ -101,7 +96,7 @@ class AddNode(Node):
 
   def propagate_gradient(self):
     for node in self._links_bwd:
-      node.store_gradient(self.gradient())
+      node.add_to_gradient(self.gradient())
 
 
 class InputNode(Node):
@@ -119,14 +114,6 @@ class InputNode(Node):
   def propagate_gradient(self):
     pass
 
-  def store_gradient(self, gradient):
-    Node.store_gradient(self,gradient)
-    self._matrix_grad.itemset((self._row,self._col),gradient)
-
-  def discard_eval(self):
-    # Reset value to input matrix
-    self._value = self._matrix.item((self._row,self._col))
-    self._gradient = None
 
 class OutputNode(Node):
 
@@ -142,13 +129,10 @@ class OutputNode(Node):
     return input
 
   def propagate_gradient(self):
-    self.store_gradient(1.0)
+    self._gradient = 1.0
     for node in self._links_bwd:
-      node.store_gradient(1.0)
+      node.add_to_gradient(1.0)
 
-  def discard_eval(self):
-    # Don't discard the gradient (which is constant at 1.0)
-    self._value = None
 
 
 class MultiplyNode(Node):
@@ -168,8 +152,8 @@ class MultiplyNode(Node):
     return sum
 
   def propagate_gradient(self):
-    self.input(0).store_gradient(self.gradient() * self.input(1).value())
-    self.input(1).store_gradient(self.gradient() * self.input(0).value())
+    self.input(0).add_to_gradient(self.gradient() * self.input(1).value())
+    self.input(1).add_to_gradient(self.gradient() * self.input(0).value())
 
 
 
@@ -187,7 +171,7 @@ class PowNode(Node):
 
   def propagate_gradient(self):
     node = self.input()
-    node.store_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
+    node.add_to_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
 
 # Stores information about a named input or output matrix
@@ -340,10 +324,19 @@ class Func:
     self.ensure_prepared()
 
     for node in self.sorted_nodes():
-      node.store_gradient(0)
+      node._gradient = 0.0
       node._value = node.calculate_value()
     for node in reversed(self.sorted_nodes()):
       node.propagate_gradient()
+
+    # Copy gradient values from input nodes to gradient matrix
+    for node in self.sorted_nodes():
+      if node.__class__ != InputNode:
+        continue
+      node._matrix_grad.itemset((node._row,node._col),node._gradient)
+
+
+
 
   def get_all_nodes(self):
     """Build a list of all nodes in graph"""
