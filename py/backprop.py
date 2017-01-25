@@ -7,6 +7,16 @@ import numpy as np
 import math
 from func import *
 
+# Let's try maximizing this function:
+#
+#    x + y
+# ----------------------
+# 1 + (x+2)^2 + (y-3)^2
+#
+
+
+
+
 # Construct matrices for cost function; parameters (input), cost (output)
 #
 parameters = mat(1,[0,0])
@@ -22,15 +32,23 @@ f.add_output("f", cost)
 x = f.inp("w",0)
 y = f.inp("w",1)
 
-n = f.add(f.square(f.add(x,f.const(-5))),f.square(f.add(y,f.const(-3))))
+n1 = f.add(x,y)
+n2 = f.square(f.add(x,f.const(2)))
+n3 = f.square(f.add(y,f.const(-3)))
+n4 = f.add(f.const(1),n2,n3)
+n5 = f.invert(n4)
+n6 = f.mult(n1,n5)
 
-f.connect(n,f.out("f"))
+f.connect(n6,f.out("f"))
 f.prepare()
 
 # Perform gradient descent iterations
 
 done = False
 previous_cost = None
+
+max_reps = 50
+epsilon = 1e-7
 
 reps = 0
 while not done:
@@ -49,16 +67,16 @@ while not done:
      current_cost,
      col(gradient,0).transpose())
 
-  if reps > 50:
+  if reps == max_reps:
     done = True
 
   if previous_cost is not None:
     delta = abs(current_cost - previous_cost)
-    if delta < 1e-5:
+    if delta < epsilon:
       done = True
   previous_cost = current_cost
 
-  add = -0.1 * gradient
+  add = 0.1 * gradient
   parameters += add
 
 

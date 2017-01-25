@@ -159,6 +159,23 @@ class PowNode(Node):
     node.add_to_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
 
+
+class InvertNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("1/x")
+
+  def calculate_value(self):
+    input = self.input_node().value()
+    return 1.0 / input
+
+  def propagate_gradient(self):
+    node = self.input_node()
+    node.add_to_gradient(self.gradient() * -1 / (self.value() * self.value()))
+
+
+
 # Stores information about a named input or output matrix
 #
 class MatrixRecord:
@@ -286,6 +303,11 @@ class Func:
   def square(self, input_node):
     """Construct a PowNode to square inputs"""
     operator = PowNode(2)
+    self.connect(input_node,operator)
+    return operator
+
+  def invert(self, input_node):
+    operator = InvertNode()
     self.connect(input_node,operator)
     return operator
 
