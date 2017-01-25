@@ -245,8 +245,11 @@ class MatrixRecord:
       node.set_label(self.name() + "[" + str(row) + "," + str(col) + "]")
       node_row.append(node)
 
+  def get_nodes(self):
+    return self._nodes
+
   def get_node(self, row, col):
-    return self._nodes[row][col]
+    return self.get_nodes()[row][col]
 
 
 class Func:
@@ -340,8 +343,7 @@ class Func:
 
       # Add all nodes from matrix record to stack
       for rec in self._matrix_records.values():
-        n = rec._nodes
-        for row_list in n:
+        for row_list in rec.get_nodes():
           stack += row_list
 
       while len(stack) != 0:
