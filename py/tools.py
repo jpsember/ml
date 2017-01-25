@@ -42,7 +42,7 @@ def dtype(s):
   if s is None:
     return '<None>'
   else:
-    return d(s) + " (type=" + str(type(s)) + ")"
+    return d(s) + " (type=" + str(s.__class__.__name__) + ")"
 
 def simple_name(filename, line):
     """    Builds a nice string from a pathname and line number; removes directories from pathname.  """

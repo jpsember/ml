@@ -31,29 +31,20 @@ class Node:
     return self._user
 
   def value(self):
-    if self._value is None:
-      self._value = self.calculate_value()
     return self._value
 
   def calculate_value(self):
     error("unimplemented calculate_value for "+dtype(self))
 
-  def gradient(self):
-    if self._gradient is None:
-      # Ask child node to calculate its gradient
-      self.output().calculate_gradients()
-    return self._gradient
+  def propagate_gradient(self):
+    """Propagate gradient from node to its parents"""
+    error("unimplemented propagate_gradient for "+dtype(self))
 
-  def calculate_gradients(self):
-    """Calculate this node's gradient, plus those of its parent nodes"""
-    error("unimplemented calculate_gradients for "+dtype(self))
+  def gradient(self):
+    return self._gradient
 
   def store_gradient(self, gradient):
     self._gradient = gradient
-
-  def discard_eval(self):
-    self._gradient = None
-    self._value = None
 
   def label(self):
     label = self._label
@@ -61,23 +52,12 @@ class Node:
       label = self.__class__.__name__
     return label
 
-  def is_io(self):
-    return False
-
   def set_label(self,label):
     self._label = label
-
-  def inputs(self):
-    return len(self._links_bwd)
 
   def input(self, index = 0):
     return self._links_bwd[index]
 
-  def outputs(self):
-    return len(self._links_fwd)
-
-  def output(self, index = 0):
-    return self._links_fwd[index]
 
 
 
@@ -90,10 +70,10 @@ class ConstNode(Node):
     self.set_label(str(value))
 
   def calculate_value(self):
-    sum = 0.
-    for node in self._links_bwd:
-      sum += node.value()
-    return sum
+    return self._value
+
+  def propagate_gradient(self):
+    pass
 
   def __str__(self):
     return str(self.value())
@@ -119,7 +99,7 @@ class AddNode(Node):
       sum += node.value()
     return sum
 
-  def calculate_gradients(self):
+  def propagate_gradient(self):
     for node in self._links_bwd:
       node.store_gradient(self.gradient())
 
@@ -132,10 +112,12 @@ class InputNode(Node):
     self._col = col
     self._matrix = matrix
     self._matrix_grad = matrix_grad
-    self._value = matrix.item((row,col))
 
-  def is_io(self):
-    return True
+  def calculate_value(self):
+    return self._matrix.item((self._row,self._col))
+
+  def propagate_gradient(self):
+    pass
 
   def store_gradient(self, gradient):
     Node.store_gradient(self,gradient)
@@ -153,19 +135,16 @@ class OutputNode(Node):
     self._matrix = matrix
     self._row = row
     self._col = col
-    self.store_gradient(1.0)
 
   def calculate_value(self):
     input = self.input().value()
     self._matrix.itemset((self._row,self._col),input)
     return input
 
-  def calculate_gradients(self):
+  def propagate_gradient(self):
+    self.store_gradient(1.0)
     for node in self._links_bwd:
       node.store_gradient(1.0)
-
-  def is_io(self):
-    return True
 
   def discard_eval(self):
     # Don't discard the gradient (which is constant at 1.0)
@@ -188,7 +167,7 @@ class MultiplyNode(Node):
         sum *= value
     return sum
 
-  def calculate_gradients(self):
+  def propagate_gradient(self):
     self.input(0).store_gradient(self.gradient() * self.input(1).value())
     self.input(1).store_gradient(self.gradient() * self.input(0).value())
 
@@ -206,7 +185,7 @@ class PowNode(Node):
     base = self._links_bwd[0].value()
     return math.pow(self.input().value(),self._power)
 
-  def calculate_gradients(self):
+  def propagate_gradient(self):
     node = self.input()
     node.store_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
@@ -277,7 +256,7 @@ class Func:
 
   def __init__(self):
     self._matrix_records = {}
-    self._node_set = None
+    self._sorted_nodes = None
 
   def connect(self, inp_node, out_node):
     self.ensure_prepared(False)
@@ -289,8 +268,7 @@ class Func:
     self.add_matrix(MatrixRecord.build_input(name,matrix))
 
   def get_gradient(self, name):
-    m = self.get_matrix(name)
-    return m.gradient()
+    return self.get_matrix(name).gradient()
 
   def add_output(self, name, matrix):
     """declare a matrix as an output"""
@@ -343,50 +321,29 @@ class Func:
     return operator
 
   def ensure_prepared(self, state = True):
-    if state != self.prepared():
+    is_prepared = (self._sorted_nodes is not None)
+    if state != is_prepared:
       error("unexpected prepared state")
 
   # Prepare graph for processing; no further structural changes can occur
   def prepare(self):
     self.ensure_prepared(False)
-    self.node_set()
+    self._sorted_nodes = self.get_sorted_nodes()
 
-  def prepared(self):
-    return (self._node_set is not None)
+  def sorted_nodes(self):
+    return self._sorted_nodes
 
   def evaluate(self):
-    self.ensure_prepared()
-
     """Evaluate outputs of function (and all intermediate nodes),
     including the gradient"""
-    for node in self.node_set():
-      node.discard_eval()
-    for node in self.node_set():
-      node.value()
-      node.gradient()
 
-  def node_set(self):
-    """Build set of nodes as closure of graph"""
-    if self._node_set is None:
-      nodes = set()
-      self._node_names = {}
+    self.ensure_prepared()
 
-      stack = []
-
-      # Add all nodes from matrix record to stack
-      for rec in self._matrix_records.values():
-        for row_list in rec.get_nodes():
-          stack += row_list
-
-      while len(stack) != 0:
-        node = stack.pop()
-        if not node in nodes:
-          nodes.add(node)
-          self._node_names[node] = str(len(self._node_names))
-          stack += node._links_bwd
-          stack += node._links_fwd
-      self._node_set = nodes
-    return self._node_set
+    for node in self.sorted_nodes():
+      node.store_gradient(0)
+      node._value = node.calculate_value()
+    for node in reversed(self.sorted_nodes()):
+      node.propagate_gradient()
 
   def get_all_nodes(self):
     """Build a list of all nodes in graph"""
@@ -432,22 +389,21 @@ class Func:
     node.set_user_value(True)
     top_sort.append(node)
 
+  def name_of_node(self, node):
+    return str(self.sorted_nodes().index(node))
 
   def make_dotfile(self, filename = "func"):
-
-    node_list = self.get_sorted_nodes()
 
     s ="digraph func {\n"
     s += "rankdir=\"LR\";\n\n"
 
-    # Generate dot file
-
-    for node in node_list:
-      name = self._node_names[node]
+    for node in self.sorted_nodes():
+      name = self.name_of_node(node)
       s += "  " + name + "["
       shape = "box"
       s += 'shape="' + shape + '" '
-      if node.is_io():
+
+      if node.__class__ == InputNode or node.__class__ == OutputNode:
         s += 'style=bold '
       s += 'label="'
       s += node.label()
@@ -468,7 +424,7 @@ class Func:
       s += '"];'
       s += "\n"
       for child in node._links_fwd:
-        s += "  " + name + " -> " + self._node_names[child] + ";\n"
+        s += "  " + name + " -> " + self.name_of_node(child) + ";\n"
       s += "\n"
     s += "}\n"
 
@@ -476,4 +432,3 @@ class Func:
     text_file.write(s)
     text_file.close()
     return s
-
