@@ -211,6 +211,10 @@ class MatrixRecord:
     self._name = name
     self._matrix = matrix
     self._gradient = None
+    self._nodes = None
+
+  def name(self):
+    return self._name
 
   def matrix(self):
     return self._matrix
@@ -222,12 +226,33 @@ class MatrixRecord:
   def gradient(self):
     return self._gradient
 
+  def build_nodes(self, input_flag):
+    self._nodes = []
+    previous_row = -1
+    node_row = None
+
+    for row,col in np.ndindex(*self.matrix().shape):
+      if row != previous_row:
+        previous_row = row
+        node_row = []
+        self._nodes.append(node_row)
+
+      if input_flag:
+        node = InputNode(self.matrix(),row,col,self.gradient())
+      else:
+        node = OutputNode(self.matrix(),row,col)
+
+      node.set_label(self.name() + "[" + str(row) + "," + str(col) + "]")
+      node_row.append(node)
+
+  def get_node(self, row, col):
+    return self._nodes[row][col]
+
 
 class Func:
 
   def __init__(self):
     self._matrix_records = {}
-    self._nodes = {}
     self._node_set = None
 
   def connect(self, inp_node, out_node):
@@ -238,9 +263,7 @@ class Func:
     """declare a matrix as an input, and generate corresponding input nodes"""
     m = self.add_matrix(name,matrix)
     m.create_gradient()
-    # Define nodes for individual elements
-    for row,col in np.ndindex(*matrix.shape):
-      self.inp(name,row,col)
+    m.build_nodes(True)
 
   def get_gradient(self, name):
     m = self.get_matrix(name)
@@ -248,10 +271,8 @@ class Func:
 
   def add_output(self, name, matrix):
     """declare a matrix as an output"""
-    self.add_matrix(name,matrix)
-    # Define nodes for individual elements
-    for row,col in np.ndindex(*matrix.shape):
-      self.out(name,row,col)
+    m = self.add_matrix(name,matrix)
+    m.build_nodes(False)
 
   def add_matrix(self, name, matrix):
     error_if(self._matrix_records.has_key(name),name+" already exists")
@@ -263,26 +284,15 @@ class Func:
     return self._matrix_records[name]
 
   def inp(self, name, row, col = 0):
-    """get node (generating if necessary) corresponding to element of input matrix"""
-    expr = name+"_"+str(row)+","+str(col)
-    node = self._nodes.get(expr)
-    if node is None:
-      m = self.get_matrix(name)
-      matrix = m.matrix()
-      node = InputNode(matrix,row,col,m.gradient())
-      self._nodes[expr] = node
-      node.set_label(name + "[" + str(row) + "," + str(col) + "]")
+    """get node corresponding to element of input matrix"""
+    rec = self.get_matrix(name)
+    node = rec.get_node(row,col)
     return node
 
   def out(self, name, row=0, col=0):
-    """get node (generating if necessary) corresponding to element of output matrix"""
-    expr = name+"_"+str(row)+","+str(col)
-    node = self._nodes.get(expr)
-    if node is None:
-      matrix = self.get_matrix(name).matrix()
-      node = OutputNode(matrix,row,col)
-      self._nodes[expr] = node
-      node.set_label(name + "[" + str(row) + "," + str(col) + "]")
+    """get node corresponding to element of output matrix"""
+    rec = self.get_matrix(name)
+    node = rec.get_node(row,col)
     return node
 
   def add(self, *input_nodes):
@@ -325,7 +335,15 @@ class Func:
     if self._node_set is None:
       nodes = set()
       self._node_names = {}
-      stack = self._nodes.values()
+
+      stack = []
+
+      # Add all nodes from matrix record to stack
+      for rec in self._matrix_records.values():
+        n = rec._nodes
+        for row_list in n:
+          stack += row_list
+
       while len(stack) != 0:
         node = stack.pop()
         if not node in nodes:
