@@ -47,14 +47,14 @@ f.prepare()
 done = False
 previous_cost = None
 
-max_reps = 50
+max_reps = 500
 epsilon = 1e-7
 
 reps = 0
 while not done:
   f.evaluate()
   gradient = f.get_gradient("w")
-  if reps == 0:
+  if reps == max_reps/3:
     f.make_dotfile("quadratic")
 
   current_cost = cost.item((0,0))

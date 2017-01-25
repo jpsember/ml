@@ -172,7 +172,7 @@ class InvertNode(Node):
 
   def propagate_gradient(self):
     node = self.input_node()
-    node.add_to_gradient(self.gradient() * -1 / (self.value() * self.value()))
+    node.add_to_gradient(self.gradient() * -1 / (node.value() * node.value()))
 
 
 
@@ -391,6 +391,9 @@ class Func:
   def name_of_node(self, node):
     return str(self.sorted_nodes().index(node))
 
+  def fmt_float(self, value):
+    return "{:7.3f}".format(value)
+
   def make_dotfile(self, filename = "func"):
 
     s ="digraph func {\n"
@@ -416,10 +419,10 @@ class Func:
       if node.__class__ != ConstNode:
         s += '\\n\\n'
         if node._value is not None:
-          s += str(node._value)
+          s += self.fmt_float(node._value)
         s += '\\n'
         if node._gradient is not None:
-          s += str(node.gradient())
+          s += self.fmt_float(node.gradient())
       s += '"];'
       s += "\n"
       for child in node._links_fwd:
