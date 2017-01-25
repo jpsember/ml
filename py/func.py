@@ -119,15 +119,15 @@ class InputNode(Node):
 
 class OutputNode(Node):
 
-  def __init__(self,matrix,row,col):
+  def __init__(self,matrix_record,row,col):
     Node.__init__(self)
-    self._matrix = matrix
+    self._matrix_record = matrix_record
     self._row = row
     self._col = col
 
   def calculate_value(self):
     input = self.input().value()
-    self._matrix.itemset((self._row,self._col),input)
+    self._matrix_record.matrix().itemset((self._row,self._col),input)
     return input
 
   def propagate_gradient(self):
@@ -226,7 +226,7 @@ class MatrixRecord:
       if input_flag:
         node = InputNode(self,row,col)
       else:
-        node = OutputNode(self.matrix(),row,col)
+        node = OutputNode(self,row,col)
 
       node.set_label(self.name() + "[" + str(row) + "," + str(col) + "]")
       node_row.append(node)
