@@ -33,7 +33,6 @@ previous_cost = None
 
 reps = 0
 while not done:
-  f.reset()
   f.evaluate()
   gradient = f.get_gradient("w")
   if reps == 0:

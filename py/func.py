@@ -284,14 +284,11 @@ class Func:
     self.connect(input_node,operator)
     return operator
 
-  def reset(self):
-    """Discard any previously cached evaluation values"""
-    for node in self.node_set():
-      node.discard_eval()
-
   def evaluate(self):
     """Evaluate outputs of function (and all intermediate nodes),
-    if not already done; also evaluate the gradient"""
+    including the gradient"""
+    for node in self.node_set():
+      node.discard_eval()
     for node in self.node_set():
       node.value()
       node.gradient()
