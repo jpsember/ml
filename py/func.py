@@ -101,18 +101,20 @@ class AddNode(Node):
 
 class InputNode(Node):
 
-  def __init__(self,matrix,row,col,matrix_grad):
+  def __init__(self,matrix_record,row,col):
     Node.__init__(self)
+    self._matrix_record = matrix_record
     self._row = row
     self._col = col
-    self._matrix = matrix
-    self._matrix_grad = matrix_grad
 
   def calculate_value(self):
-    return self._matrix.item((self._row,self._col))
+    return self._matrix_record.matrix().item((self._row,self._col))
 
   def propagate_gradient(self):
     pass
+
+  def store_gradient_to_matrix(self):
+    self._matrix_record.gradient().itemset((self._row,self._col),self._gradient)
 
 
 class OutputNode(Node):
@@ -222,7 +224,7 @@ class MatrixRecord:
         self._nodes.append(node_row)
 
       if input_flag:
-        node = InputNode(self.matrix(),row,col,self.gradient())
+        node = InputNode(self,row,col)
       else:
         node = OutputNode(self.matrix(),row,col)
 
@@ -329,14 +331,13 @@ class Func:
     for node in reversed(self.sorted_nodes()):
       node.propagate_gradient()
 
-    # Copy gradient values from input nodes to gradient matrix
+    self.read_gradients_from_input_nodes()
+
+  def read_gradients_from_input_nodes(self):
     for node in self.sorted_nodes():
       if node.__class__ != InputNode:
         continue
-      node._matrix_grad.itemset((node._row,node._col),node._gradient)
-
-
-
+      node.store_gradient_to_matrix()
 
   def get_all_nodes(self):
     """Build a list of all nodes in graph"""
