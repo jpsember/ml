@@ -15,14 +15,6 @@ class Node:
     self._label = None
     self._user = None
 
-  def __str__(self):
-    s = self.label()
-    if self._value is not None:
-      s += " value:" + str(self.value())
-    if self._gradient is not None:
-      s += " grad:" + str(self.gradient())
-    return s
-
   def set_user_value(self, value):
     """Store a value for user usage, e.g., for marking nodes as visited during a sort"""
     self._user = value
@@ -37,8 +29,8 @@ class Node:
     error("unimplemented calculate_value for "+dtype(self))
 
   def propagate_gradient(self):
-    """Propagate gradient from node to its parents"""
-    error("unimplemented propagate_gradient for "+dtype(self))
+    """Propagate gradient from node to its parents; base implementation does nothing"""
+    pass
 
   def gradient(self):
     return self._gradient
@@ -46,16 +38,13 @@ class Node:
   def add_to_gradient(self, amount):
     self._gradient += amount
 
-  def label(self):
-    label = self._label
-    if label is None:
-      label = self.__class__.__name__
-    return label
-
   def set_label(self,label):
     self._label = label
 
-  def input(self, index = 0):
+  def label(self):
+    return self._label
+
+  def input_node(self, index = 0):
     return self._links_bwd[index]
 
 
@@ -71,9 +60,6 @@ class ConstNode(Node):
 
   def calculate_value(self):
     return self._value
-
-  def propagate_gradient(self):
-    pass
 
   def __str__(self):
     return str(self.value())
@@ -110,9 +96,6 @@ class InputNode(Node):
   def calculate_value(self):
     return self._matrix_record.matrix().item((self._row,self._col))
 
-  def propagate_gradient(self):
-    pass
-
   def store_gradient_to_matrix(self):
     self._matrix_record.gradient().itemset((self._row,self._col),self._gradient)
 
@@ -126,7 +109,7 @@ class OutputNode(Node):
     self._col = col
 
   def calculate_value(self):
-    input = self.input().value()
+    input = self.input_node().value()
     self._matrix_record.matrix().itemset((self._row,self._col),input)
     return input
 
@@ -154,8 +137,8 @@ class MultiplyNode(Node):
     return sum
 
   def propagate_gradient(self):
-    self.input(0).add_to_gradient(self.gradient() * self.input(1).value())
-    self.input(1).add_to_gradient(self.gradient() * self.input(0).value())
+    self.input_node(0).add_to_gradient(self.gradient() * self.input_node(1).value())
+    self.input_node(1).add_to_gradient(self.gradient() * self.input_node(0).value())
 
 
 
@@ -169,10 +152,10 @@ class PowNode(Node):
 
   def calculate_value(self):
     base = self._links_bwd[0].value()
-    return math.pow(self.input().value(),self._power)
+    return math.pow(self.input_node().value(),self._power)
 
   def propagate_gradient(self):
-    node = self.input()
+    node = self.input_node()
     node.add_to_gradient(self.gradient() * self._power * math.pow(node.value(),self._power - 1))
 
 
