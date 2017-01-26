@@ -124,6 +124,15 @@ class Func:
       self.connect(inp,multiplier)
     return multiplier
 
+  def div(self, *input_nodes):
+    """Construct a MultiplyNode and an InvertNode to divide first input by second"""
+    error_if(len(input_nodes) != 2)
+    operator = MultiplyNode()
+    self.connect(input_nodes[0],operator)
+    self.connect(self.invert(input_nodes[1]),operator)
+    return operator
+
+
   def max(self, *input_nodes):
     """Construct a MaxNode to take the maximum of two nodes"""
     error_if(len(input_nodes) != 2)

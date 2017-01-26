@@ -46,10 +46,7 @@ y = f.elem("w",1)
 numer = f.max(f.mult(f.elem("d",0),x), f.mult(f.elem("d",1),y))
 denom = f.add(f.const(1), f.square(x), f.square(y))
 
-unimp("we should implement divide as multiply by reciprocal")
-n2 = f.mult(numer,f.invert(denom))
-
-f.connect(n2,f.elem("f"))
+f.connect(f.div(numer,denom),f.elem("f"))
 f.prepare()
 
 # Perform gradient descent iterations
