@@ -35,6 +35,10 @@ def d(s):
     return unicodeToStr(s)
   return str(s)
 
+def df(value):
+  """Convert a float to a string, with fixed-width format"""
+  return "{:7.3f}".format(value)
+
 def dtype(s):
   """
   Print string representation of object (with d(x)), followed by type name

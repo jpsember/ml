@@ -15,10 +15,6 @@ from func import *
 #
 
 
-def fmt_float(value):
-  return "{:7.3f}".format(value)
-
-
 # Construct matrices for cost function; parameters (input), cost (output)
 #
 parameters = mat(1,[0,0])
@@ -75,9 +71,9 @@ while not done:
   pr("Rep: %2d Param:%s Cost:%s Grad:%s Speed:%s\n",
      reps,
      col(parameters,0).transpose(),
-     fmt_float(current_cost),
+     df(current_cost),
      col(gradient,0).transpose(),
-     fmt_float(speed))
+     df(speed))
 
   if reps == max_reps:
     done = True

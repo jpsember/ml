@@ -236,9 +236,6 @@ class Func:
   def name_of_node(self, node):
     return str(self.sorted_nodes().index(node))
 
-  def fmt_float(self, value):
-    return "{:7.3f}".format(value)
-
   def make_dotfile(self, filename = "func"):
 
     s ="digraph func {\n"
@@ -258,10 +255,10 @@ class Func:
       if node.__class__ != ConstNode:
         s += '\\n\\n'
         if node._value is not None:
-          s += self.fmt_float(node._value)
+          s += df(node._value)
         s += '\\n'
         if node._gradient is not None:
-          s += self.fmt_float(node.gradient())
+          s += df(node.gradient())
       s += '"];'
       s += "\n"
       for child in node._links_fwd:
