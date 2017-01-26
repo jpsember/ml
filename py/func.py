@@ -140,9 +140,9 @@ class Func:
       self.connect(inp,operator)
     return operator
 
-  def const(self, value):
+  def const(self, value, label=None):
     """Construct a ConstNode"""
-    return ConstNode(value)
+    return ConstNode(value, label)
 
   def square(self, input_node):
     """Construct a PowNode to square inputs"""
@@ -168,7 +168,12 @@ class Func:
       # node = RegularizationLossNode(lambda_factor)
       # self.connect(self.elem(matrix_name,row,col), node)
 
-    return self.add(*nodes)
+    sum_node = self.add(*nodes)
+
+    # This generates the unicode lambda character
+    label = u'\u03bb;'
+    scaling_node = self.mult(sum_node,self.const(lambda_factor,label))
+    return scaling_node
 
   def ensure_prepared(self, state = True):
     is_prepared = (self._sorted_nodes is not None)
@@ -280,7 +285,8 @@ class Func:
       s += "\n"
     s += "}\n"
 
-    text_file = open(filename + ".dot","w")
+    import io # Allows us to include unicode characters
+    text_file = io.open(filename + ".dot","w", encoding='utf8')
     text_file.write(s)
     text_file.close()
     return s

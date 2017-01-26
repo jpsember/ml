@@ -48,10 +48,18 @@ class Node:
 
 class ConstNode(Node):
 
-  def __init__(self,value):
+  def __init__(self,value,label=None):
     Node.__init__(self)
     self._value = value
-    self.set_label(str(value))
+
+    if label is not None:
+      # If label ends with ";", replace with value on next line
+      if label[-1] == ";":
+        label = label[:-1] + "\n" + str(value)
+    else:
+      label = str(value)
+
+    self.set_label(label)
 
   def calculate_value(self):
     return self._value
