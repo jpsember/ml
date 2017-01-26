@@ -165,9 +165,6 @@ class Func:
       node = self.square(matrix_node)
       node.set_label("R("+matrix_name + "_" + str(row) + "," + str(col) + ")")
       nodes.append(node)
-      # node = RegularizationLossNode(lambda_factor)
-      # self.connect(self.elem(matrix_name,row,col), node)
-
     sum_node = self.add(*nodes)
 
     # This generates the unicode lambda character

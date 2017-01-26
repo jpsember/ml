@@ -41,7 +41,6 @@ denom = f.add(f.const(1), f.square(x), f.square(y))
 
 loss_node = f.div(numer,denom)
 reg_node = f.reg_loss("w",0.1)
-unimp("lambda unused in reg loss")
 sum_node = f.add(loss_node,reg_node)
 
 f.connect(sum_node,f.elem("f"))
