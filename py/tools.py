@@ -37,7 +37,40 @@ def d(s):
 
 def df(value):
   """Convert a float to a string, with fixed-width format"""
-  return "{:7.3f}".format(value)
+  s = "{:9.3f}".format(value)
+  if s.endswith(".000"):
+    s = s[:-4] + "    "
+  return s
+
+def dm(matrix):
+  """Convert a matrix to a string; transpose to a row if it's a column (e.g. k * 1)"""
+
+  # If it's not a matrix, but a single row (or column), convert to a matrix
+  if len(matrix.shape) == 1:
+    matrix = np.reshape(matrix, (1,matrix.shape[0]))
+
+  # Transpose so column becomes row
+  if matrix.shape[0] > 1 and matrix.shape[1] == 1:
+    matrix = matrix.transpose()
+
+  s = ""
+  height = matrix.shape[0]
+  for y in range(height):
+    if y == 0:
+      row = "["
+    else:
+      row = " "
+
+    for x in range(matrix.shape[1]):
+      row += df(matrix.item(y,x))
+
+    if y == height - 1:
+      row += " ]"
+    if height > 1:
+        row += '\n'
+    s += row
+  return s
+
 
 def dtype(s):
   """
@@ -128,8 +161,7 @@ import math
 def mat(ncols, arr):
   """Build matrix (numpy array), given number of columns"""
   a = np.array(arr,dtype=float)
-  a = a.reshape(a.size / ncols, ncols)
-  return a
+  return a.reshape(a.size / ncols, ncols)
 
 def vector(arr):
   """Build vector (numpy array)"""

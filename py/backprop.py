@@ -7,6 +7,16 @@ import numpy as np
 import math
 from func import *
 
+if False:
+  m = mat(2,[1.1,-123.8888,3,-4])
+  print dm(m)
+
+  print dm(col(m,0))
+
+  print dm(row(m,0))
+
+  sys.exit()
+
 # Let's try maximizing this function:
 #
 #   max(2x,3y)
@@ -70,9 +80,9 @@ while not done:
   np.set_printoptions(precision=3, suppress = True)
   pr("Rep: %2d Param:%s Cost:%s Grad:%s Speed:%s\n",
      reps,
-     col(parameters,0).transpose(),
+     dm(col(parameters,0)),
      df(current_cost),
-     col(gradient,0).transpose(),
+     dm(col(gradient,0)),
      df(speed))
 
   if reps == max_reps:
