@@ -410,12 +410,6 @@ class Func:
       s += 'label="'
       s += node.label()
 
-      # Include topological sort values
-      q = node.user_value()
-      if q is not None:
-        s += "(sort:" + str(q)+")"
-        s += '\\n'
-
       if node.__class__ != ConstNode:
         s += '\\n\\n'
         if node._value is not None:

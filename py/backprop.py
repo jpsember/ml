@@ -51,7 +51,7 @@ previous_cost = None
 previous_param = None
 previous_gradient = None
 
-max_reps = 500
+max_reps = 60
 epsilon = 1e-7
 speed = 0.3
 accel = 1.3
