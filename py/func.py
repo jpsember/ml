@@ -163,7 +163,6 @@ class Func:
     for row,col in np.ndindex(*matrix.shape):
       matrix_node = self.elem(matrix_name,row,col)
       node = self.square(matrix_node)
-      node.set_label("R("+matrix_name + "_" + str(row) + "," + str(col) + ")")
       nodes.append(node)
     sum_node = self.add(*nodes)
 
