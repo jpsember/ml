@@ -95,6 +95,19 @@ class InputNode(Node):
     self._matrix_record.gradient().itemset((self._row,self._col),self._gradient)
 
 
+class DataNode(Node):
+
+  def __init__(self,matrix_record,row,col):
+    Node.__init__(self)
+    self._matrix_record = matrix_record
+    self._row = row
+    self._col = col
+
+  def calculate_value(self):
+    return self._matrix_record.matrix().item((self._row,self._col))
+
+
+
 class OutputNode(Node):
 
   def __init__(self,matrix_record,row,col):

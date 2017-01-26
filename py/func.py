@@ -19,13 +19,19 @@ class MatrixRecord:
   def build_input(cls, name, matrix):
     m = MatrixRecord(name,matrix)
     m.create_gradient()
-    m.build_nodes(True)
+    m.build_nodes(lambda obj, row, call : InputNode(obj,row,call))
     return m
 
   @classmethod
   def build_output(cls, name, matrix):
     m = MatrixRecord(name,matrix)
-    m.build_nodes(False)
+    m.build_nodes(lambda obj, row, call : OutputNode(obj,row,call))
+    return m
+
+  @classmethod
+  def build_data(cls, name, matrix):
+    m = MatrixRecord(name,matrix)
+    m.build_nodes(lambda obj, row, call : DataNode(obj,row,call))
     return m
 
   def name(self):
@@ -41,7 +47,7 @@ class MatrixRecord:
   def gradient(self):
     return self._gradient
 
-  def build_nodes(self, input_flag):
+  def build_nodes(self, node_constructor):
     self._nodes = []
     previous_row = -1
     node_row = None
@@ -51,12 +57,7 @@ class MatrixRecord:
         previous_row = row
         node_row = []
         self._nodes.append(node_row)
-
-      if input_flag:
-        node = InputNode(self,row,col)
-      else:
-        node = OutputNode(self,row,col)
-
+      node = node_constructor(self, row, col)
       node.set_label(self.name() + "[" + str(row) + "," + str(col) + "]")
       node_row.append(node)
 
@@ -82,6 +83,10 @@ class Func:
     """declare a matrix as an input, and generate corresponding input nodes"""
     self.add_matrix(MatrixRecord.build_input(name,matrix))
 
+  def add_data(self, name, matrix):
+    """declare a matrix as additional data (not parameters), e.g. a training sample"""
+    self.add_matrix(MatrixRecord.build_data(name,matrix))
+
   def get_gradient(self, name):
     return self.get_matrix(name).gradient()
 
@@ -97,14 +102,8 @@ class Func:
   def get_matrix(self, name):
     return self._matrix_records[name]
 
-  def inp(self, name, row, col = 0):
-    """get node corresponding to element of input matrix"""
-    rec = self.get_matrix(name)
-    node = rec.get_node(row,col)
-    return node
-
-  def out(self, name, row=0, col=0):
-    """get node corresponding to element of output matrix"""
+  def elem(self, name, row = 0, col = 0):
+    """get node corresponding to element of an input, output, or data matrix"""
     rec = self.get_matrix(name)
     node = rec.get_node(row,col)
     return node
@@ -234,7 +233,7 @@ class Func:
       shape = "box"
       s += 'shape="' + shape + '" '
 
-      if node.__class__ == InputNode or node.__class__ == OutputNode:
+      if node.__class__ == InputNode or node.__class__ == OutputNode or node.__class__ == DataNode:
         s += 'style=bold '
       s += 'label="'
       s += node.label()

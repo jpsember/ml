@@ -24,24 +24,28 @@ def fmt_float(value):
 parameters = mat(1,[0,0])
 cost = mat(1,[0])
 
+# Also include a data matrix, which we can use to plug in different training samples, for instance
+data = mat(1,[2,-3])
+
 # Construct a graph representing the cost function
 #
 f = Func()
 
 f.add_input("w", parameters)
 f.add_output("f", cost)
+f.add_data("d", data)
 
-x = f.inp("w",0)
-y = f.inp("w",1)
+x = f.elem("w",0)
+y = f.elem("w",1)
 
 n1 = f.add(x,y)
-n2 = f.square(f.add(x,f.const(2)))
-n3 = f.square(f.add(y,f.const(-3)))
+n2 = f.square(f.add(x,f.elem("d",0)))
+n3 = f.square(f.add(y,f.elem("d",1)))
 n4 = f.add(f.const(1),n2,n3)
 n5 = f.invert(n4)
 n6 = f.mult(n1,n5)
 
-f.connect(n6,f.out("f"))
+f.connect(n6,f.elem("f"))
 f.prepare()
 
 # Perform gradient descent iterations
