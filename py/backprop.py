@@ -9,9 +9,9 @@ from func import *
 
 # Let's try maximizing this function:
 #
-#    x + y
-# ----------------------
-# 1 + (x+2)^2 + (y-3)^2
+#   max(2x,3y)
+# --------------
+# (1 + x^2 + y^2)
 #
 
 
@@ -25,10 +25,15 @@ parameters = mat(1,[0,0])
 cost = mat(1,[0])
 
 # Also include a data matrix, which we can use to plug in different training samples, for instance
-data = mat(1,[2,-3])
+data = mat(1,[2,3])
 
 # Construct a graph representing the cost function
 #
+maximizing = True
+negater = -1
+if maximizing:
+  negater = 1
+
 f = Func()
 
 f.add_input("w", parameters)
@@ -38,14 +43,13 @@ f.add_data("d", data)
 x = f.elem("w",0)
 y = f.elem("w",1)
 
-n1 = f.add(x,y)
-n2 = f.square(f.add(x,f.elem("d",0)))
-n3 = f.square(f.add(y,f.elem("d",1)))
-n4 = f.add(f.const(1),n2,n3)
-n5 = f.invert(n4)
-n6 = f.mult(n1,n5)
+numer = f.max(f.mult(f.elem("d",0),x), f.mult(f.elem("d",1),y))
+denom = f.add(f.const(1), f.square(x), f.square(y))
 
-f.connect(n6,f.elem("f"))
+unimp("we should implement divide as multiply by reciprocal")
+n2 = f.mult(numer,f.invert(denom))
+
+f.connect(n2,f.elem("f"))
 f.prepare()
 
 # Perform gradient descent iterations
@@ -64,8 +68,8 @@ reps = 0
 while not done:
   f.evaluate()
   gradient = f.get_gradient("w")
-  if reps == max_reps/3:
-    f.make_dotfile("quadratic")
+  if reps == 4:
+    f.make_dotfile("max")
 
   current_cost = cost.item((0,0))
   reps += 1
@@ -87,7 +91,7 @@ while not done:
       done = True
       break
 
-    if previous_cost > current_cost:
+    if previous_cost * negater < current_cost * negater:
       speed = speed * accel
     else:
       # Restore original parameters
@@ -98,7 +102,8 @@ while not done:
 
   previous_cost = current_cost
 
-  add = -speed * gradient
+  add = (negater * speed) * gradient
+
   previous_param = parameters.copy()
   previous_gradient = gradient.copy()
 

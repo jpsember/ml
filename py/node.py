@@ -151,6 +151,32 @@ class MultiplyNode(Node):
 
 
 
+class MaxNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("max")
+
+  def calculate_value(self):
+    max = None
+    for node in self._links_bwd:
+      value = node.value()
+      if max is None or max < value:
+        max = value
+    return max
+
+  def propagate_gradient(self):
+    i0 = self.input_node(0)
+    i1 = self.input_node(1)
+
+    if i0.value() >= i1.value():
+      i0.add_to_gradient(self.gradient())
+    else:
+      i1.add_to_gradient(self.gradient())
+
+
+
+
 class PowNode(Node):
 
   def __init__(self,power):

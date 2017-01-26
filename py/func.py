@@ -124,6 +124,14 @@ class Func:
       self.connect(inp,multiplier)
     return multiplier
 
+  def max(self, *input_nodes):
+    """Construct a MaxNode to take the maximum of two nodes"""
+    error_if(len(input_nodes) != 2)
+    operator = MaxNode()
+    for inp in input_nodes:
+      self.connect(inp,operator)
+    return operator
+
   def const(self, value):
     """Construct a ConstNode"""
     return ConstNode(value)
