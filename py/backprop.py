@@ -7,19 +7,9 @@ import numpy as np
 import math
 from func import *
 
-if False:
-  m = mat(2,[1.1,-123.8888,3,-4])
-  print dm(m)
-
-  print dm(col(m,0))
-
-  print dm(row(m,0))
-
-  sys.exit()
-
-# Let's try maximizing this function:
+# Let's try minimizing this function:
 #
-#   max(2x,3y)
+#   - max(2x,3y)    <--- the negative sign is so we can always be minimizing
 # --------------
 # (1 + x^2 + y^2)
 #
@@ -35,10 +25,6 @@ data = mat(1,[2,3])
 
 # Construct a graph representing the cost function
 #
-maximizing = True
-negater = -1
-if maximizing:
-  negater = 1
 
 f = Func()
 
@@ -50,9 +36,15 @@ x = f.elem("w",0)
 y = f.elem("w",1)
 
 numer = f.max(f.mult(f.elem("d",0),x), f.mult(f.elem("d",1),y))
+numer = f.mult(f.const(-1),numer)
 denom = f.add(f.const(1), f.square(x), f.square(y))
 
-f.connect(f.div(numer,denom),f.elem("f"))
+loss_node = f.div(numer,denom)
+reg_node = f.reg_loss("w",0.1)
+unimp("lambda unused in reg loss")
+sum_node = f.add(loss_node,reg_node)
+
+f.connect(sum_node,f.elem("f"))
 f.prepare()
 
 # Perform gradient descent iterations
@@ -94,7 +86,7 @@ while not done:
       done = True
       break
 
-    if previous_cost * negater < current_cost * negater:
+    if previous_cost > current_cost:
       speed = speed * accel
     else:
       # Restore original parameters
@@ -105,7 +97,7 @@ while not done:
 
   previous_cost = current_cost
 
-  add = (negater * speed) * gradient
+  add = (-speed) * gradient
 
   previous_param = parameters.copy()
   previous_gradient = gradient.copy()

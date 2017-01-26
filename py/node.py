@@ -208,4 +208,29 @@ class InvertNode(Node):
     node = self.input_node()
     node.add_to_gradient(self.gradient() * -1 / (node.value() * node.value()))
 
+# This isn't used yet (and may be buggy):
+#
+class RegularizationLossNode(Node):
 
+  def __init__(self, matrix_record, lambda_factor):
+    Node.__init__(self)
+    self._matrix_record = matrix_record
+    self._lambda = lambda_factor
+    self.set_label("R("+matrix_record.name()+")")
+    self._gradient = None
+
+  def calculate_value(self):
+    w = self._matrix.matrix()
+    w_squared = np.square(m)
+    return w_squared.sum()
+
+  def propagate_gradient(self):
+    w = self._matrix.matrix()
+    self._gradient = 2 * w.sum
+
+    node = self.input_node()
+    node.add_to_gradient(self.gradient() * -1 / (node.value() * node.value()))
+
+  def propagate_gradient(self):
+    node = self.input_node()
+    node.add_to_gradient(self.gradient() * -1 / (node.value() * node.value()))

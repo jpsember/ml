@@ -132,7 +132,6 @@ class Func:
     self.connect(self.invert(input_nodes[1]),operator)
     return operator
 
-
   def max(self, *input_nodes):
     """Construct a MaxNode to take the maximum of two nodes"""
     error_if(len(input_nodes) != 2)
@@ -155,6 +154,21 @@ class Func:
     operator = InvertNode()
     self.connect(input_node,operator)
     return operator
+
+  def reg_loss(self, matrix_name, lambda_factor):
+    """Generate nodes to add a regularization loss for a particular (input) matrix."""
+    matrix = self.get_matrix(matrix_name).matrix()
+
+    nodes = []
+    for row,col in np.ndindex(*matrix.shape):
+      matrix_node = self.elem(matrix_name,row,col)
+      node = self.square(matrix_node)
+      node.set_label("R("+matrix_name + "_" + str(row) + "," + str(col) + ")")
+      nodes.append(node)
+      # node = RegularizationLossNode(lambda_factor)
+      # self.connect(self.elem(matrix_name,row,col), node)
+
+    return self.add(*nodes)
 
   def ensure_prepared(self, state = True):
     is_prepared = (self._sorted_nodes is not None)
