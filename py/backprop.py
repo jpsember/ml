@@ -15,6 +15,8 @@ from func import *
 #
 
 
+def fmt_float(value):
+  return "{:7.3f}".format(value)
 
 
 # Construct matrices for cost function; parameters (input), cost (output)
@@ -46,9 +48,13 @@ f.prepare()
 
 done = False
 previous_cost = None
+previous_param = None
+previous_gradient = None
 
 max_reps = 500
 epsilon = 1e-7
+speed = 0.3
+accel = 1.3
 
 reps = 0
 while not done:
@@ -61,11 +67,12 @@ while not done:
   reps += 1
 
   np.set_printoptions(precision=3, suppress = True)
-  pr("Rep: %2d Param:%s Cost:%8.6f Grad:%s\n",
+  pr("Rep: %2d Param:%s Cost:%s Grad:%s Speed:%s\n",
      reps,
      col(parameters,0).transpose(),
-     current_cost,
-     col(gradient,0).transpose())
+     fmt_float(current_cost),
+     col(gradient,0).transpose(),
+     fmt_float(speed))
 
   if reps == max_reps:
     done = True
@@ -74,9 +81,23 @@ while not done:
     delta = abs(current_cost - previous_cost)
     if delta < epsilon:
       done = True
+      break
+
+    if previous_cost > current_cost:
+      speed = speed * accel
+    else:
+      # Restore original parameters
+      np.copyto(parameters, previous_param)
+      np.copyto(gradient, previous_gradient)
+      # Reduce speed
+      speed = speed * 0.2
+
   previous_cost = current_cost
 
-  add = 0.1 * gradient
+  add = -speed * gradient
+  previous_param = parameters.copy()
+  previous_gradient = gradient.copy()
+
   parameters += add
 
 
