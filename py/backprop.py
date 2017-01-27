@@ -7,6 +7,16 @@ import numpy as np
 import math
 from func import *
 
+
+
+if True:
+  warning("trying out plot")
+  plt.plot([1,2,3,4])
+  plt.ylabel('some numbers')
+  save_plot()
+  sys.exit()
+
+
 # Let's try minimizing this function:
 #
 #   - max(2x,3y)    <--- the negative sign is so we can always be minimizing

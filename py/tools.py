@@ -88,7 +88,7 @@ def simple_name(filename, line):
         filename = m.group(1)
     return "(" + filename.ljust(12) + str(line).rjust(4) + ")"
 
-def warn_skip(nSkip, *args):
+def warning_skip(nSkip, *args):
   """Prints warning, if hasn't yet been printed."""
   loc = get_caller_location(nSkip + 2)
   s = "*** warning " + loc + ": "
@@ -101,8 +101,8 @@ def warn_skip(nSkip, *args):
       _v.repMap.add(msg)
       print(msg)
 
-def warn(*args):
-  warn_skip(1, *args)
+def warning(*args):
+  warning_skip(1, *args)
 
 def get_caller_location(nSkip=2):
   h = inspect.stack()
@@ -127,7 +127,7 @@ def unimp(*args):
       print(msg)
 
 def my_assert(cond):
-  warn_skip(1, "checking assertion")
+  warning_skip(1, "checking assertion")
   error_if(not cond)
 
 def error(msg=None):
@@ -177,3 +177,12 @@ def col(matrix, col_number):
   return matrix[:,col_number]
 
 
+# Plotting
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
+def save_plot(filename = 'plot.pdf'):
+  pp = PdfPages(filename)
+  pp.savefig()
+  pp.close()
