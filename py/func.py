@@ -263,7 +263,7 @@ class Func:
   def make_dotfile(self, filename = "func"):
 
     s ="digraph func {\n"
-    s += "rankdir=\"LR\";\n\n"
+    s += "\n"
 
     for node in self.sorted_nodes():
       name = self.name_of_node(node)

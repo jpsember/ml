@@ -21,7 +21,15 @@ def build_spiral_data(points_per_class = 100, num_classes = NUM_CLASSES):
   return (X,y)
 
 
+
+
 np.random.seed(1965)
+
+train_samples,train_types = build_spiral_data(10,NUM_CLASSES)
+
+
+
+
 
 DATA_DIM = 3  # includes bias value, always 1.0
 
@@ -79,17 +87,31 @@ accel = 1.3
 reps = 0
 while not done:
 
-  # Plug in sample data
-  # (todo: iterate over all sample data values, accumulating gradient for each)
-  data[0,0] = 5
-  data[1,0] = 7
+  # Iterate over all the training samples, plugging each into the function
+  # and summing the cost and gradients produced
+  num_samples = len(train_samples)
+  gradient_sum = np.zeros_like(f.get_gradient("w"))
+  cost_sum = 0
 
-  data_type[0] = 0
+  for train_index in range(num_samples):
+    train_sample = train_samples[train_index]
+    data[0,0] = train_sample[0]
+    data[1,0] = train_sample[1]
 
-  f.evaluate()
-  gradient = f.get_gradient("w")
+    data_type[0] = train_types[train_index]
 
-  current_cost = cost.item((0,0))
+    f.evaluate()
+    gradient = f.get_gradient("w")
+    gradient_sum += gradient
+
+    current_cost = cost.item((0,0))
+    cost_sum += current_cost
+
+  # Replace cost/gradient sums with averages
+  current_cost = cost_sum / num_samples
+  gradient_sum *= (1.0 / num_samples)
+  gradient = gradient_sum
+
   reps += 1
 
   pr("Rep: %2d Param:%s Cost:%s Grad:%s Speed:%s\n",
@@ -126,6 +148,6 @@ while not done:
 
   parameters += add
 
-  if done: #reps == 0:
+  if reps == 12:
     f.make_dotfile("max")
 
