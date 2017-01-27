@@ -7,14 +7,10 @@ from PIL import Image
 NUM_LABELS = 10
 SUBSET_PATH = "assets/cifar_subset.bin"
 
-def unpickle(file):
+def read_batch(file = SUBSET_PATH):
   fo = open(file, 'rb')
   dict = cPickle.load(fo)
   fo.close()
-  return dict
-
-def read_batch(file = 'assets/cifar-10-batches-py/data_batch_1'):
-  dict = unpickle(file)
   data = dict['data']
   labels = dict['labels']
   return (data,labels)
@@ -22,7 +18,7 @@ def read_batch(file = 'assets/cifar-10-batches-py/data_batch_1'):
 def build_subset(samples_per_set = 4):
   """Build a subset of the cifar dataset.  Returns a list of lists of sample images"""
 
-  data,labels = read_batch()
+  data,labels = read_batch('assets/cifar-10-batches-py/data_batch_1')
   samples = []
   for i in range(NUM_LABELS):
     samples.append([])
@@ -100,4 +96,4 @@ def generate_cropped_subset(num_labels = 3, generate_png = False):
 
 generate_cropped_subset()
 data, labels = read_batch(SUBSET_PATH)
-print labels
+print "Generated cropped subset of CIFAR dataset; labels:\n",labels
