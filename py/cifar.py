@@ -1,4 +1,7 @@
-# Attempt to access the CIFAR dataset, and convert a few images to jpg...
+#! /usr/bin/env python
+
+NUM_LABELS = 10
+
 
 def unpickle(file):
     import cPickle
@@ -7,14 +10,37 @@ def unpickle(file):
     fo.close()
     return dict
 
-dict = unpickle('assets/cifar-10-batches-py/data_batch_1')
+def read_batch():
+  dict = unpickle('assets/cifar-10-batches-py/data_batch_1')
+  data = dict['data']
+  labels = dict['labels']
+  return (data,labels)
 
-image_index = 3
+def build_subset(samples_per_set = 4):
 
-data = dict['data']
-labels = dict['labels']
-image = data[image_index]
-label = labels[image_index]
+  data,labels = read_batch()
+  samples = {}
 
-print "image:",image,"length:",image.size
-print "label:",label
+  samples_remaining = samples_per_set * NUM_LABELS
+
+  image_index = 0
+  while samples_remaining > 0:
+
+    image = data[image_index]
+    label = labels[image_index]
+    image_index += 1
+
+    if not samples.has_key(label):
+      samples[label] = []
+
+    sample = samples[label]
+    if len(sample) == samples_per_set:
+      continue
+
+    print "label:",label,"image:",image,"length:",image.size
+
+    sample.append(image)
+    samples_remaining -= 1
+
+
+build_subset()
