@@ -5,6 +5,7 @@ import cPickle
 from PIL import Image
 
 NUM_LABELS = 10
+SUBSET_PATH = "assets/cifar_subset.bin"
 
 def unpickle(file):
   fo = open(file, 'rb')
@@ -12,8 +13,8 @@ def unpickle(file):
   fo.close()
   return dict
 
-def read_batch():
-  dict = unpickle('assets/cifar-10-batches-py/data_batch_1')
+def read_batch(file = 'assets/cifar-10-batches-py/data_batch_1'):
+  dict = unpickle(file)
   data = dict['data']
   labels = dict['labels']
   return (data,labels)
@@ -76,10 +77,27 @@ def generate_image(pixels, width, height):
   image.putdata(pixels_out)
   return image
 
+def generate_cropped_subset(num_labels = 3, generate_png = False):
+  """Generate a cropped subset of the cifar images"""
+  dict = {}
+  data = []
+  dict['data'] = data
+  labels = []
+  dict['labels'] = labels
 
-samples = build_subset()
-src_pix = samples[0][1]
-dest_pix = crop_cifar(src_pix,32,32,8,8)
-image = generate_image(dest_pix,8,8)
-image.save('cropped.png')
+  samples = build_subset()
+  for label_number in range(num_labels):
+    for image in samples[label_number]:
+      dest_pix = crop_cifar(image,32,32,8,8)
+      image = generate_image(dest_pix,8,8)
+      if generate_png:
+        image.save('subset_' + str(len(data))+'.png')
+      data.append(dest_pix)
+      labels.append(label_number)
 
+  cPickle.dump(dict, open(SUBSET_PATH, "wb") )
+
+
+generate_cropped_subset()
+data, labels = read_batch(SUBSET_PATH)
+print labels
