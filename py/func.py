@@ -166,8 +166,7 @@ class Func:
       nodes.append(node)
     sum_node = self.add(*nodes)
 
-    # This generates the unicode lambda character
-    label = u'\u03bb;'
+    label = "Lambda"  # Too much of a gong show getting unicode working nicely
     scaling_node = self.mult(sum_node,self.const(lambda_factor,label))
     return scaling_node
 
@@ -281,8 +280,7 @@ class Func:
       s += "\n"
     s += "}\n"
 
-    import io # Allows us to include unicode characters
-    text_file = io.open(filename + ".dot","w", encoding='utf8')
+    text_file = open(filename + ".dot","w")
     text_file.write(s)
     text_file.close()
     return s
