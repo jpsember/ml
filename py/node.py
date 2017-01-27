@@ -221,11 +221,47 @@ class SVMLossNode(Node):
   def __init__(self):
     Node.__init__(self)
     self.set_label("SVM loss")
+    self._type_losses = []
 
   def calculate_value(self):
-    unimp("calc value for SVMLossNode")
-    return 0
+    # Determine the training data's category
+    data_type = int(self.input_node().value())
+    data_type_node = self.input_node(1 + data_type)
+
+    # Iterate over the score nodes to calculate losses for each type
+    self._type_losses[:] = []
+    for j in range(len(self._links_bwd) - 1):
+      score_node = self.input_node(j+1)
+      loss = 0
+
+      if j != data_type:
+        score = score_node.value()
+        loss = score - data_type_node.value() + 1.0
+        loss = max(0,loss)
+      self._type_losses.append(loss)
+
+    return np.sum(self._type_losses)
 
   def propagate_gradient(self):
-    unimp("prop grad for SVMLossNode")
+    #
+    # We need to propagate gradient of Max[0,(Sj - Si + 1)]
+    #
+    # For each of the losses, if it was zero, skip;
+    # otherwise, to Sj, propagate (input gradient) * 1
+    #            to Si, propagate (input gradient) * -1
+    #
+    data_type = int(self.input_node().value())
+    data_type_node = self.input_node(1 + data_type)
+
+    si_gradient = 0
+    for j in range(len(self._type_losses)):
+      loss = self._type_losses[j]
+      if loss == 0:
+        continue
+      error_if(j == data_type)
+      score_node = self.input_node(j+1)
+      score_node.add_to_gradient(self.gradient())
+      si_gradient -= self.gradient()
+
+    data_type_node.add_to_gradient(si_gradient)
 

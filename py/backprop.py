@@ -21,15 +21,17 @@ def build_spiral_data(points_per_class = 100, num_classes = NUM_CLASSES):
   return (X,y)
 
 
+np.random.seed(1965)
+
 DATA_DIM = 3  # includes bias value, always 1.0
 
 parameters = 0.01 * np.random.randn(DATA_DIM, NUM_CLASSES)
 
 # Also include a data matrix, with which we will plug in the different training samples
 data = mat(1,np.zeros(DATA_DIM))
+data[2,0] = 1 # this is always 1
+
 data_type = mat(1,np.zeros(1))
-
-
 
 f = Func()
 
@@ -69,7 +71,7 @@ previous_cost = None
 previous_param = None
 previous_gradient = None
 
-max_reps = 8 # temporary: until SVM loss implemented
+max_reps = 50
 epsilon = 1e-7
 speed = 0.3
 accel = 1.3
@@ -81,13 +83,11 @@ while not done:
   # (todo: iterate over all sample data values, accumulating gradient for each)
   data[0,0] = 5
   data[1,0] = 7
-  data[2,0] = -3
-  data_type[0] = NUM_CLASSES / 2
+
+  data_type[0] = 0
 
   f.evaluate()
   gradient = f.get_gradient("w")
-  if reps == 0:
-    f.make_dotfile("max")
 
   current_cost = cost.item((0,0))
   reps += 1
@@ -125,3 +125,7 @@ while not done:
   previous_gradient = gradient.copy()
 
   parameters += add
+
+  if done: #reps == 0:
+    f.make_dotfile("max")
+
