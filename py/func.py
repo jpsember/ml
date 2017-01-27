@@ -170,6 +170,16 @@ class Func:
     scaling_node = self.mult(sum_node,self.const(lambda_factor,label))
     return scaling_node
 
+  def svm_loss(self, data_type_node, score_nodes):
+    """Generate SVM loss node"""
+    svm_node = SVMLossNode()
+    # First connect to data type node;
+    # then to the score nodes
+    self.connect(data_type_node,svm_node)
+    for score_node in score_nodes:
+      self.connect(score_node,svm_node)
+    return svm_node
+
   def ensure_prepared(self, state = True):
     is_prepared = (self._sorted_nodes is not None)
     if state != is_prepared:

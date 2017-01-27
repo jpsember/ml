@@ -27,12 +27,15 @@ parameters = 0.01 * np.random.randn(DATA_DIM, NUM_CLASSES)
 
 # Also include a data matrix, with which we will plug in the different training samples
 data = mat(1,np.zeros(DATA_DIM))
+data_type = mat(1,np.zeros(1))
+
 
 
 f = Func()
 
 f.add_input("w", parameters)
 f.add_data("d", data)
+f.add_data("y",data_type)
 
 # Construct nodes S representing matrix multiplication W x D
 #
@@ -47,11 +50,14 @@ for k in range(NUM_CLASSES):
   sum_node = f.add(*mult_nodes)
   s.append(sum_node)
 
-# Temporary: add S to get single cost value (until we implement SVM loss)
-sum_node = f.add(*s)
+svm_node = f.svm_loss(f.elem("y",0), s)
+
+
 cost = mat(1,[0])
 f.add_output("f",cost)
-f.connect(sum_node,f.elem("f"))
+
+reg_node = f.reg_loss("w",0.1)
+f.connect(f.add(svm_node, reg_node),f.elem("f"))
 
 f.prepare()
 
@@ -76,7 +82,7 @@ while not done:
   data[0,0] = 5
   data[1,0] = 7
   data[2,0] = -3
-
+  data_type[0] = NUM_CLASSES / 2
 
   f.evaluate()
   gradient = f.get_gradient("w")

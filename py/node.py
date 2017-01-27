@@ -216,3 +216,16 @@ class InvertNode(Node):
     node = self.input_node()
     node.add_to_gradient(self.gradient() * -1 / (node.value() * node.value()))
 
+class SVMLossNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("SVM loss")
+
+  def calculate_value(self):
+    unimp("calc value for SVMLossNode")
+    return 0
+
+  def propagate_gradient(self):
+    unimp("prop grad for SVMLossNode")
+
