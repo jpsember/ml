@@ -49,7 +49,7 @@ f.add_data("y",data_type)
 
 # Construct nodes S representing matrix multiplication W x D
 #
-s = []
+score_nodes = []
 for k in range(NUM_CLASSES):
   mult_nodes = []
   for i in range(3):
@@ -58,9 +58,9 @@ for k in range(NUM_CLASSES):
     m = f.mult(w,x)
     mult_nodes.append(m)
   sum_node = f.add(*mult_nodes)
-  s.append(sum_node)
+  score_nodes.append(sum_node)
 
-svm_node = f.svm_loss(f.elem("y",0), s)
+svm_node = f.svm_loss(f.elem("y",0), score_nodes)
 
 
 cost = mat(1,[0])
@@ -150,4 +150,56 @@ while not done:
 
   if reps == 12:
     f.make_dotfile("max")
+
+
+# Now evaluate function for a grid of points
+#
+
+results = []
+for i in range(NUM_CLASSES):
+  results.append([[],[]])
+
+RES = 50
+for yi in range(RES):
+  y = 2 * (yi - RES/2) / float(RES)
+  for xi in range(RES):
+    x = 2 * (xi - RES/2) / float(RES)
+
+    data[0,0] = x
+    data[1,0] = y
+
+    f.evaluate()
+
+    max_val = None
+    best_type = None
+    type = 0
+    for score_node in score_nodes:
+      # print "score nodes:",score_nodes
+      val = score_node.value()
+      if max_val is None or max_val < val:
+        max_val = val
+        best_type = type
+      type += 1
+
+    # print "x:",x,"y:",y,"type:",best_type
+    ls = results[best_type]
+    ls[0].append(x)
+    ls[1].append(y)
+    # results[type].append([x,y])
+
+
+type = 0
+colors = ['m.','y.','c.']
+for ls in results:
+  plt.plot(ls[0],ls[1],colors[type])
+  type += 1
+
+colors2 = ['ro','go','bo']
+for train_index in range(len(train_samples)):
+  train_sample = train_samples[train_index]
+  x = train_sample[0]
+  y = train_sample[1]
+  plt.plot(x,y,colors2[train_types[train_index]])
+
+save_plot()
 
