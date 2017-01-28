@@ -270,7 +270,7 @@ class RegLossNode(Node):
 
   def __init__(self, lambda_factor):
     Node.__init__(self)
-    self.set_label("Lambda\n"+df(lambda_factor))
+    self.set_label("Reg loss\nL="+df(lambda_factor))
     self._lambda = lambda_factor
 
   def calculate_value(self):

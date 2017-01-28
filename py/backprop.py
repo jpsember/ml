@@ -149,7 +149,7 @@ while not done:
   parameters += add
 
   if reps == 12:
-    f.make_dotfile("max")
+    f.make_dotfile("spiral")
 
 print "Trained parameters:"
 print dm(parameters)
@@ -177,18 +177,15 @@ for yi in range(RES):
     best_type = None
     type = 0
     for score_node in score_nodes:
-      # print "score nodes:",score_nodes
       val = score_node.value()
       if max_val is None or max_val < val:
         max_val = val
         best_type = type
       type += 1
 
-    # print "x:",x,"y:",y,"type:",best_type
     ls = results[best_type]
     ls[0].append(x)
     ls[1].append(y)
-    # results[type].append([x,y])
 
 
 type = 0
