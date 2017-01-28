@@ -265,3 +265,24 @@ class SVMLossNode(Node):
 
     data_type_node.add_to_gradient(si_gradient)
 
+
+class RegLossNode(Node):
+
+  def __init__(self, lambda_factor):
+    Node.__init__(self)
+    self.set_label("Lambda\n"+df(lambda_factor))
+    self._lambda = lambda_factor
+
+  def calculate_value(self):
+    value = 0.0
+    for node in self._links_bwd:
+      node_val = node.value()
+      value += node_val * node_val
+    return value * self._lambda
+
+  def propagate_gradient(self):
+    multiplier = 2 * self._lambda * self.gradient()
+    for node in self._links_bwd:
+      node_val = node.value()
+      node.add_to_gradient(node_val * multiplier)
+

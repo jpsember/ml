@@ -157,18 +157,14 @@ class Func:
 
   def reg_loss(self, matrix_name, lambda_factor):
     """Generate nodes to add a regularization loss for a particular (input) matrix."""
-    matrix = self.get_matrix(matrix_name).matrix()
+    matrix_record = self.get_matrix(matrix_name)
 
-    nodes = []
-    for row,col in np.ndindex(*matrix.shape):
-      matrix_node = self.elem(matrix_name,row,col)
-      node = self.square(matrix_node)
-      nodes.append(node)
-    sum_node = self.add(*nodes)
+    node = RegLossNode(lambda_factor)
+    for node_list in matrix_record.get_nodes():
+      for mat_node in node_list:
+        self.connect(mat_node, node)
 
-    label = "Lambda"  # Too much of a gong show getting unicode working nicely
-    scaling_node = self.mult(sum_node,self.const(lambda_factor,label))
-    return scaling_node
+    return node
 
   def svm_loss(self, data_type_node, score_nodes):
     """Generate SVM loss node"""

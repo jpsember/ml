@@ -151,6 +151,9 @@ while not done:
   if reps == 12:
     f.make_dotfile("max")
 
+print "Trained parameters:"
+print dm(parameters)
+
 
 # Now evaluate function for a grid of points
 #
