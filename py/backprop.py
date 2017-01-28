@@ -8,6 +8,7 @@ import math
 from func import *
 
 NUM_CLASSES = 3
+DATA_DIM = 3  # includes bias value, always 1.0
 
 def build_spiral_data(points_per_class = 100, num_classes = NUM_CLASSES):
   X = np.zeros((points_per_class*num_classes,2)) # data matrix (each row = single example)
@@ -20,7 +21,17 @@ def build_spiral_data(points_per_class = 100, num_classes = NUM_CLASSES):
     y[ix] = j
   return (X,y)
 
-
+def calculated_type(score_nodes):
+  max_val = None
+  best_type = None
+  type = 0
+  for score_node in score_nodes:
+    val = score_node.value()
+    if max_val is None or max_val < val:
+      max_val = val
+      best_type = type
+    type += 1
+  return best_type
 
 
 np.random.seed(1965)
@@ -28,24 +39,26 @@ np.random.seed(1965)
 train_samples,train_types = build_spiral_data(10,NUM_CLASSES)
 
 
+# Define matrices containing the parameters, data inputs, and cost
 
 
-
-DATA_DIM = 3  # includes bias value, always 1.0
 
 parameters = 0.01 * np.random.randn(DATA_DIM, NUM_CLASSES)
 
-# Also include a data matrix, with which we will plug in the different training samples
+# Also include a data matrix (and data type), into which we will plug in the different training samples
 data = mat(1,np.zeros(DATA_DIM))
-data[2,0] = 1 # this is always 1
-
+data[DATA_DIM - 1,0] = 1 # this is always 1
 data_type = mat(1,np.zeros(1))
+
+cost = mat(1,[0])
+
 
 f = Func()
 
 f.add_input("w", parameters)
 f.add_data("d", data)
 f.add_data("y",data_type)
+f.add_output("f",cost)
 
 # Construct nodes S representing matrix multiplication W x D
 #
@@ -61,11 +74,6 @@ for k in range(NUM_CLASSES):
   score_nodes.append(sum_node)
 
 svm_node = f.svm_loss(f.elem("y",0), score_nodes)
-
-
-cost = mat(1,[0])
-f.add_output("f",cost)
-
 reg_node = f.reg_loss("w",0.1)
 f.connect(f.add(svm_node, reg_node),f.elem("f"))
 
@@ -155,6 +163,22 @@ print "Trained parameters:"
 print dm(parameters)
 
 
+# Determine accuracy of function relative to training set
+
+correct_count = 0
+n_samples = len(train_samples)
+for i in range(n_samples):
+  x,y = train_samples[i]
+  data[0,0] = x
+  data[1,0] = y
+  f.evaluate()
+  eval_type = calculated_type(score_nodes)
+  if train_types[i] == eval_type:
+    correct_count += 1
+
+print "Accuracy:",df(correct_count / float(n_samples))
+
+
 # Now evaluate function for a grid of points
 #
 
@@ -172,18 +196,7 @@ for yi in range(RES):
     data[1,0] = y
 
     f.evaluate()
-
-    max_val = None
-    best_type = None
-    type = 0
-    for score_node in score_nodes:
-      val = score_node.value()
-      if max_val is None or max_val < val:
-        max_val = val
-        best_type = type
-      type += 1
-
-    ls = results[best_type]
+    ls = results[calculated_type(score_nodes)]
     ls[0].append(x)
     ls[1].append(y)
 
