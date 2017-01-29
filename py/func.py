@@ -34,6 +34,11 @@ class MatrixRecord:
     m.build_nodes(lambda obj, row, call : DataNode(obj,row,call))
     return m
 
+  @classmethod
+  def build_implicit(cls, name, matrix):
+    m = MatrixRecord(name, matrix)
+    return m
+
   def name(self):
     return self._name
 
@@ -124,6 +129,61 @@ class Func:
       self.connect(inp,multiplier)
     return multiplier
 
+  def mult_matrix(self, name_a, name_b, name_result):
+    """Construct an implicit matrix representing the multiplication of two named matrices"""
+    rec_a = self.get_matrix(name_a)
+    rec_b = self.get_matrix(name_b)
+    n_a = rec_a.get_nodes()
+    n_b = rec_b.get_nodes()
+    a_rows = len(n_a)
+    a_cols = len(n_a[0])
+    b_rows = len(n_b)
+    b_cols = len(n_b[0])
+    error_if(a_cols != b_rows, "invalid matrix mult")
+
+    c_rows = a_rows
+    c_cols = b_cols
+    common = a_cols
+
+    matrix = mat(c_rows, np.zeros(c_rows * c_cols))
+    matrix_rec = MatrixRecord.build_implicit(name_result, matrix)
+    self.add_matrix(matrix_rec)
+
+    result_nodes = []
+    for y in range(c_rows):
+      result_row = []
+      result_nodes.append(result_row)
+      for x in range(c_cols):
+        sum_nodes = []
+        for i in range(common):
+          node = self.mult(rec_a.get_node(y,i), rec_b.get_node(i,x))
+          sum_nodes.append(node)
+        sum_node = self.add(*sum_nodes)
+        result_row.append(sum_node)
+    matrix_rec._nodes = result_nodes
+    return matrix_rec
+
+  def relu_matrix(self, name_input, name_result):
+    """Construct an implicit matrix representing the ReLU activation of an input matrix"""
+    rec_input = self.get_matrix(name_input)
+    matrix = np.zeros_like(rec_input.matrix())
+    rec_output = MatrixRecord.build_implicit(name_result, matrix)
+    self.add_matrix(rec_output)
+
+    cols,rows = matrix.shape
+    result_nodes = []
+    for y in range(rows):
+      result_row = []
+      result_nodes.append(result_row)
+      for x in range(cols):
+        inp_node = rec_input.get_node(y,x)
+        node = ReLUNode()
+        self.connect(inp_node,node)
+        result_row.append(node)
+    rec_output._nodes = result_nodes
+    return rec_output
+
+
   def div(self, *input_nodes):
     """Construct a MultiplyNode and an InvertNode to divide first input by second"""
     error_if(len(input_nodes) != 2)
@@ -172,7 +232,7 @@ class Func:
     # First connect to data type node;
     # then to the score nodes
     self.connect(data_type_node,svm_node)
-    for score_node in score_nodes:
+    for score_node in score_nodes[0]:
       self.connect(score_node,svm_node)
     return svm_node
 

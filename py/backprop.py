@@ -25,7 +25,8 @@ def calculated_type(score_nodes):
   max_val = None
   best_type = None
   type = 0
-  for score_node in score_nodes:
+  # Todo: clarify why we're looking at row instead of column here
+  for score_node in score_nodes[0]:
     val = score_node.value()
     if max_val is None or max_val < val:
       max_val = val
@@ -39,42 +40,47 @@ np.random.seed(1965)
 train_samples,train_types = build_spiral_data(10,NUM_CLASSES)
 
 
-# Define matrices containing the parameters, data inputs, and cost
+# Define matrices containing the layers, data inputs, and cost
 
 
 
-parameters = 0.01 * np.random.randn(DATA_DIM, NUM_CLASSES)
+data = mat(DATA_DIM,np.zeros(DATA_DIM))
+data[0,DATA_DIM-1] = 1
 
-# Also include a data matrix (and data type), into which we will plug in the different training samples
-data = mat(1,np.zeros(DATA_DIM))
-data[DATA_DIM - 1,0] = 1 # this is always 1
 data_type = mat(1,np.zeros(1))
 
 cost = mat(1,[0])
 
+NET_SIZE = 100 # size of hidden layer
+
+SMALL = (NET_SIZE <= 20)
+
+w1 = np.random.randn(DATA_DIM, NET_SIZE)
+w2 = np.random.randn(NET_SIZE, NUM_CLASSES)
+
+
 
 f = Func()
 
-f.add_input("w", parameters)
 f.add_data("d", data)
 f.add_data("y",data_type)
+f.add_input("w1", w1)
+f.add_input("w2", w2)
+
 f.add_output("f",cost)
 
-# Construct nodes S representing matrix multiplication W x D
-#
-score_nodes = []
-for k in range(NUM_CLASSES):
-  mult_nodes = []
-  for i in range(3):
-    w = f.elem("w",k,i)
-    x = f.elem("d",i)
-    m = f.mult(w,x)
-    mult_nodes.append(m)
-  sum_node = f.add(*mult_nodes)
-  score_nodes.append(sum_node)
+# Generate matrix record for multiplication
+f.mult_matrix("d","w1","l1");
+
+# Generate nodes representing ReLU activation of a set of nodes
+f.relu_matrix("l1","relu")
+
+score_rec = f.mult_matrix("relu","w2","s")
+
+score_nodes = score_rec.get_nodes()
 
 svm_node = f.svm_loss(f.elem("y",0), score_nodes)
-reg_node = f.reg_loss("w",0.1)
+reg_node = f.reg_loss("relu",0.1)
 f.connect(f.add(svm_node, reg_node),f.elem("f"))
 
 f.prepare()
@@ -84,8 +90,6 @@ f.prepare()
 
 done = False
 previous_cost = None
-previous_param = None
-previous_gradient = None
 
 max_reps = 50
 epsilon = 1e-7
@@ -98,35 +102,34 @@ while not done:
   # Iterate over all the training samples, plugging each into the function
   # and summing the cost and gradients produced
   num_samples = len(train_samples)
-  gradient_sum = np.zeros_like(f.get_gradient("w"))
+  gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
+  gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
   cost_sum = 0
 
   for train_index in range(num_samples):
     train_sample = train_samples[train_index]
     data[0,0] = train_sample[0]
-    data[1,0] = train_sample[1]
+    data[0,1] = train_sample[1]
 
     data_type[0] = train_types[train_index]
 
     f.evaluate()
-    gradient = f.get_gradient("w")
-    gradient_sum += gradient
+    gradient_sum_w1 += f.get_gradient("w1")
+    gradient_sum_w2 += f.get_gradient("w2")
 
     current_cost = cost.item((0,0))
     cost_sum += current_cost
 
   # Replace cost/gradient sums with averages
   current_cost = cost_sum / num_samples
-  gradient_sum *= (1.0 / num_samples)
-  gradient = gradient_sum
+  gradient_sum_w1 *= (1.0 / num_samples)
+  gradient_sum_w2 *= (1.0 / num_samples)
 
   reps += 1
 
-  pr("Rep: %2d Param:%s Cost:%s Grad:%s Speed:%s\n",
+  pr("Rep: %2d Cost:%s Speed:%s\n",
      reps,
-     dm(col(parameters,0)),
      df(current_cost),
-     dm(col(gradient,0)),
      df(speed))
 
   if reps == max_reps:
@@ -138,30 +141,23 @@ while not done:
       done = True
       break
 
-    if previous_cost > current_cost:
-      speed = speed * accel
-    else:
-      # Restore original parameters
-      np.copyto(parameters, previous_param)
-      np.copyto(gradient, previous_gradient)
-      # Reduce speed
-      speed = speed * 0.2
-
   previous_cost = current_cost
 
-  add = (-speed) * gradient
+  parameters = f.get_matrix("w1").matrix()
+  parameters += (-speed) * gradient_sum_w1
 
-  previous_param = parameters.copy()
-  previous_gradient = gradient.copy()
+  if SMALL:
+    print "Trained parameters w1:"
+    print dm(parameters)
 
-  parameters += add
+  parameters = f.get_matrix("w2").matrix()
+  parameters += (-speed) * gradient_sum_w2
+  if SMALL:
+    print "Trained parameters w2:"
+    print dm(parameters)
 
-  if reps == 12:
+  if SMALL and reps == 12:
     f.make_dotfile("spiral")
-
-print "Trained parameters:"
-print dm(parameters)
-
 
 # Determine accuracy of function relative to training set
 
@@ -170,7 +166,7 @@ n_samples = len(train_samples)
 for i in range(n_samples):
   x,y = train_samples[i]
   data[0,0] = x
-  data[1,0] = y
+  data[0,1] = y
   f.evaluate()
   eval_type = calculated_type(score_nodes)
   if train_types[i] == eval_type:
@@ -193,7 +189,7 @@ for yi in range(RES):
     x = 2 * (xi - RES/2) / float(RES)
 
     data[0,0] = x
-    data[1,0] = y
+    data[0,1] = y
 
     f.evaluate()
     ls = results[calculated_type(score_nodes)]

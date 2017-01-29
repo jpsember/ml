@@ -286,3 +286,22 @@ class RegLossNode(Node):
       node_val = node.value()
       node.add_to_gradient(node_val * multiplier)
 
+
+class ReLUNode(Node):
+
+  def __init__(self):
+    Node.__init__(self)
+    self.set_label("ReLU")
+
+  def calculate_value(self):
+    inp_node = self.input_node(0)
+    value = inp_node.value()
+    if value <= 0:
+      value = 0.0
+    return value
+
+  def propagate_gradient(self):
+    inp_node = self.input_node(0)
+    if self.value() > 0:
+      inp_node.add_to_gradient(self.gradient())
+
