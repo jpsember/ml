@@ -37,7 +37,7 @@ def calculated_type(score_nodes):
 
 np.random.seed(1965)
 
-train_samples,train_types = build_spiral_data(10,NUM_CLASSES)
+train_samples,train_types = build_spiral_data(100,NUM_CLASSES)
 
 
 # Define matrices containing the layers, data inputs, and cost
@@ -91,13 +91,19 @@ f.prepare()
 done = False
 previous_cost = None
 
-max_reps = 50
+max_reps = 75
 epsilon = 1e-7
 speed = 0.3
 accel = 1.3
 
 reps = 0
 while not done:
+  if reps < 20:
+    speed = 0.7
+  elif reps < 30:
+    speed = 0.25
+  else:
+    speed = 0.1
 
   # Iterate over all the training samples, plugging each into the function
   # and summing the cost and gradients produced
