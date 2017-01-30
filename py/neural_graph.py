@@ -9,7 +9,7 @@ import math
 from func import *
 from common import *
 
-TWO_LAYERS = False
+TWO_LAYERS = True
 
 # Size of hidden layer
 H = 100
@@ -53,8 +53,8 @@ class App:
     self.cost = mat(1,[0])
     output_height = H
     if TWO_LAYERS:
-      height_2 = H / 3
-      output_height =  H / 2
+      height_2 = 20
+      output_height =  8
       self.w1 = np.random.randn(data_dim, height_2)
       self.w2 = np.random.randn(height_2,output_height)
     else:
@@ -122,6 +122,8 @@ class App:
     reps = 0
     while not done:
       speed = math.pow(2.0, -(reps/30.0))
+      if TWO_LAYERS:
+        speed *= 0.2
 
       # Iterate over all the training samples, plugging each into the function
       # and summing the cost and gradients produced
@@ -161,8 +163,7 @@ class App:
          df(current_cost),
          df(speed))
 
-      # For the moment, stop after fewer reps (we still get very good results at least with single hidden layer):
-      if reps == 20:
+      if reps == 75:
         done = True
 
       if reps > 10:
@@ -217,7 +218,7 @@ class App:
     for i in range(NUM_CLASSES):
       results.append([[],[]])
 
-    res = 30
+    res = 60
     for yi in range(res):
       y = 2 * (yi - res/2) / float(res)
       for xi in range(res):
@@ -234,7 +235,7 @@ class App:
     type = 0
     colors = ['mo','yo','co']
     for ls in self.grid_results:
-      plt.plot(ls[0],ls[1],colors[type],markersize=25)
+      plt.plot(ls[0],ls[1],colors[type],markersize=18)
       type += 1
 
 
