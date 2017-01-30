@@ -53,10 +53,11 @@ class App:
     self.cost = mat(1,[0])
     output_height = H
     if TWO_LAYERS:
-      height_2 = 20
+      height_2 = 10
       output_height =  8
       self.w1 = np.random.randn(data_dim, height_2)
-      self.w2 = np.random.randn(height_2,output_height)
+      self.w2 = np.random.randn(height_2,height_2)
+      self.w3 = np.random.randn(height_2,output_height)
     else:
       self.w1 = np.random.randn(data_dim, output_height)
     self.w_out = np.random.randn(output_height, NUM_CLASSES)
@@ -70,6 +71,7 @@ class App:
     f.add_input("w1",self.w1)
     if TWO_LAYERS:
       f.add_input("w2",self.w2)
+      f.add_input("w3",self.w3)
     f.add_input("w_out",self.w_out)
 
     f.add_output("f",self.cost)
@@ -79,9 +81,13 @@ class App:
     f.relu_matrix("l1",r_out)
 
     if TWO_LAYERS:
-      f.mult_matrix(r_out,"w2","l1b")
+      f.mult_matrix(r_out,"w2","l2")
       r_out = "r2"
-      f.relu_matrix("l1b",r_out)
+      f.relu_matrix("l2",r_out)
+
+      f.mult_matrix(r_out,"w3","l3")
+      r_out = "r3"
+      f.relu_matrix("l3",r_out)
 
     s = f.mult_matrix(r_out,"w_out","s")
 
@@ -96,6 +102,7 @@ class App:
     if TWO_LAYERS:
       nodes.append(f.reg_loss("w1",wt))
       nodes.append(f.reg_loss("w2",wt))
+      nodes.append(f.reg_loss("w3",wt))
       nodes.append(f.reg_loss("w_out",wt))
     else:
       nodes.append(f.reg_loss("w1",wt))
@@ -129,6 +136,7 @@ class App:
       gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
       if TWO_LAYERS:
         gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
+        gradient_sum_w3 = np.zeros_like(f.get_gradient("w3"))
       gradient_sum_w_out = np.zeros_like(f.get_gradient("w_out"))
       cost_sum = 0
 
@@ -142,6 +150,7 @@ class App:
         gradient_sum_w1 += f.get_gradient("w1")
         if TWO_LAYERS:
           gradient_sum_w2 += f.get_gradient("w2")
+          gradient_sum_w3 += f.get_gradient("w3")
         gradient_sum_w_out += f.get_gradient("w_out")
 
         current_cost = self.cost.item((0,0))
@@ -152,6 +161,7 @@ class App:
       gradient_sum_w1 *= (1.0 / num_samples)
       if TWO_LAYERS:
         gradient_sum_w2 *= (1.0 / num_samples)
+        gradient_sum_w3 *= (1.0 / num_samples)
       gradient_sum_w_out *= (1.0 / num_samples)
 
       reps += 1
@@ -176,6 +186,8 @@ class App:
       if TWO_LAYERS:
         m = f.get_matrix("w2").matrix()
         m += (-speed) * gradient_sum_w2
+        m = f.get_matrix("w3").matrix()
+        m += (-speed) * gradient_sum_w3
       m = f.get_matrix("w_out").matrix()
       m += (-speed) * gradient_sum_w_out
 
@@ -194,6 +206,8 @@ class App:
     if TWO_LAYERS:
       print "Trained w2:"
       print dm(f.get_matrix("w2").matrix())
+      print "Trained w3:"
+      print dm(f.get_matrix("w3").matrix())
     print "Trained w_out:"
     print dm(f.get_matrix("w_out").matrix())
 
