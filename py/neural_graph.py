@@ -9,7 +9,13 @@ import math
 from func import *
 from common import *
 
-NET_SIZE = 10 # size of hidden layer
+TWO_LAYERS = False
+
+# Size of hidden layer
+if TWO_LAYERS:
+  NET_SIZE = 10
+else:
+  NET_SIZE = 100
 
 class App:
 
@@ -49,8 +55,9 @@ class App:
     self.data_type = mat(1,np.zeros(1))
     self.cost = mat(1,[0])
     self.w1 = np.random.randn(data_dim, NET_SIZE)
-    self.w1b = np.random.randn(NET_SIZE,NET_SIZE)
-    self.w2 = np.random.randn(NET_SIZE, NUM_CLASSES)
+    if TWO_LAYERS:
+      self.w2 = np.random.randn(NET_SIZE,NET_SIZE)
+    self.w_out = np.random.randn(NET_SIZE, NUM_CLASSES)
 
 
   def define_function(self):
@@ -59,27 +66,40 @@ class App:
     f.add_data("d",self.data)
     f.add_data("y",self.data_type)
     f.add_input("w1",self.w1)
-    f.add_input("w1b",self.w1b)
-    f.add_input("w2",self.w2)
+    if TWO_LAYERS:
+      f.add_input("w2",self.w2)
+    f.add_input("w_out",self.w_out)
 
     f.add_output("f",self.cost)
 
     f.mult_matrix("d","w1","l1");
-    f.relu_matrix("l1","relu")
+    f.relu_matrix("l1","r1")
+    r_out = "r1"
 
-    f.mult_matrix("relu","w1b","l1b")
-    f.relu_matrix("l1b","relub")
+    if TWO_LAYERS:
+      f.mult_matrix("r1","w2","l1b")
+      f.relu_matrix("l1b","r2")
+      r_out = "r2"
 
-    s = f.mult_matrix("relub","w2","s")
+    s = f.mult_matrix(r_out,"w_out","s")
 
     self.score_nodes = s.get_nodes()
 
     svm_node = f.svm_loss(f.elem("y",0), self.score_nodes)
-    reg_node_w1 = f.reg_loss("w1",0.1)
-    reg_node_w2 = f.reg_loss("w1b",0.1)
-    reg_node_relu1 = f.reg_loss("relu",0.1)
-    reg_node_relu2 = f.reg_loss("relub",0.1)
-    f.connect(f.add(svm_node, reg_node_w1,reg_node_w2,reg_node_relu1,reg_node_relu2),f.elem("f"))
+
+    # We don't need reg loss on relu matrices, since they are already proportional to the matrices they follow
+    nodes = [svm_node]
+    if TWO_LAYERS:
+      wt = 0.1 / 3
+      nodes.append(f.reg_loss("w1",wt))
+      nodes.append(f.reg_loss("w2",wt))
+      nodes.append(f.reg_loss("w_out",wt))
+    else:
+      wt = 0.1 / 2
+      nodes.append(f.reg_loss("w1",wt))
+      nodes.append(f.reg_loss("w_out",wt))
+
+    f.connect(f.add(*nodes),f.elem("f"))
 
     f.prepare()
     self.f = f
@@ -105,8 +125,9 @@ class App:
       # and summing the cost and gradients produced
       num_samples = len(self.train_samples)
       gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
-      gradient_sum_w1b = np.zeros_like(f.get_gradient("w1b"))
-      gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
+      if TWO_LAYERS:
+        gradient_sum_w1b = np.zeros_like(f.get_gradient("w2"))
+      gradient_sum_w2 = np.zeros_like(f.get_gradient("w_out"))
       cost_sum = 0
 
       for train_index in range(num_samples):
@@ -117,8 +138,9 @@ class App:
 
         f.evaluate()
         gradient_sum_w1 += f.get_gradient("w1")
-        gradient_sum_w1b += f.get_gradient("w1b")
-        gradient_sum_w2 += f.get_gradient("w2")
+        if TWO_LAYERS:
+          gradient_sum_w1b += f.get_gradient("w2")
+        gradient_sum_w2 += f.get_gradient("w_out")
 
         current_cost = self.cost.item((0,0))
         cost_sum += current_cost
@@ -126,7 +148,8 @@ class App:
       # Replace cost/gradient sums with averages
       current_cost = cost_sum / num_samples
       gradient_sum_w1 *= (1.0 / num_samples)
-      gradient_sum_w1b *= (1.0 / num_samples)
+      if TWO_LAYERS:
+        gradient_sum_w1b *= (1.0 / num_samples)
       gradient_sum_w2 *= (1.0 / num_samples)
 
       reps += 1
@@ -148,20 +171,29 @@ class App:
 
       m = f.get_matrix("w1").matrix()
       m += (-speed) * gradient_sum_w1
-      m = f.get_matrix("w1b").matrix()
-      m += (-speed) * gradient_sum_w1b
-      m = f.get_matrix("w2").matrix()
+      if TWO_LAYERS:
+        m = f.get_matrix("w2").matrix()
+        m += (-speed) * gradient_sum_w1b
+      m = f.get_matrix("w_out").matrix()
       m += (-speed) * gradient_sum_w2
 
       if NET_SIZE <= 20:
-        print "Trained w1:"
-        print dm(f.get_matrix("w1").matrix())
-        print "Trained w1b:"
-        print dm(f.get_matrix("w1b").matrix())
-        print "Trained w2:"
-        print dm(f.get_matrix("w2").matrix())
+        self.display_parameters()
         if reps == 12:
           f.make_dotfile()
+
+    self.display_parameters()
+
+
+  def display_parameters(self):
+    f = self.f
+    print "Trained w1:"
+    print dm(f.get_matrix("w1").matrix())
+    if TWO_LAYERS:
+      print "Trained w1b:"
+      print dm(f.get_matrix("w2").matrix())
+    print "Trained w2:"
+    print dm(f.get_matrix("w_out").matrix())
 
   def evaluate_accuracy(self):
     """Determine accuracy of function relative to training set"""
