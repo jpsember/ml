@@ -8,7 +8,7 @@ desc "Compile dot files to pdf"
 task :dotfiles => FileList.new("**/*.dot").map{|x| x.chomp("dot") + "pdf"}
 
 desc "Run program, recompile dot files"
-task :default => [CIFAR_SUBSET_PATH] do
+task :default do
   system("backprop.py")
   Rake::Task["dotfiles"].invoke
 end
