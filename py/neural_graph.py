@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+# Represent a neural network as a graph,
+# train it to assign colors to the 'spiral' points
+#
+
 import numpy as np
 import math
 from func import *
