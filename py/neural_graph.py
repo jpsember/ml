@@ -9,7 +9,7 @@ import math
 from func import *
 from common import *
 
-NET_SIZE = 100 # size of hidden layer
+NET_SIZE = 10 # size of hidden layer
 
 class App:
 
@@ -49,6 +49,7 @@ class App:
     self.data_type = mat(1,np.zeros(1))
     self.cost = mat(1,[0])
     self.w1 = np.random.randn(data_dim, NET_SIZE)
+    self.w1b = np.random.randn(NET_SIZE,NET_SIZE)
     self.w2 = np.random.randn(NET_SIZE, NUM_CLASSES)
 
 
@@ -58,23 +59,27 @@ class App:
     f.add_data("d",self.data)
     f.add_data("y",self.data_type)
     f.add_input("w1",self.w1)
+    f.add_input("w1b",self.w1b)
     f.add_input("w2",self.w2)
 
     f.add_output("f",self.cost)
 
-    # Generate matrix record for multiplication
     f.mult_matrix("d","w1","l1");
-
-    # Generate nodes representing ReLU activation of a set of nodes
     f.relu_matrix("l1","relu")
 
-    s = f.mult_matrix("relu","w2","s")
+    f.mult_matrix("relu","w1b","l1b")
+    f.relu_matrix("l1b","relub")
+
+    s = f.mult_matrix("relub","w2","s")
 
     self.score_nodes = s.get_nodes()
 
     svm_node = f.svm_loss(f.elem("y",0), self.score_nodes)
-    reg_node = f.reg_loss("relu",0.1)
-    f.connect(f.add(svm_node, reg_node),f.elem("f"))
+    reg_node_w1 = f.reg_loss("w1",0.1)
+    reg_node_w2 = f.reg_loss("w1b",0.1)
+    reg_node_relu1 = f.reg_loss("relu",0.1)
+    reg_node_relu2 = f.reg_loss("relub",0.1)
+    f.connect(f.add(svm_node, reg_node_w1,reg_node_w2,reg_node_relu1,reg_node_relu2),f.elem("f"))
 
     f.prepare()
     self.f = f
@@ -100,6 +105,7 @@ class App:
       # and summing the cost and gradients produced
       num_samples = len(self.train_samples)
       gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
+      gradient_sum_w1b = np.zeros_like(f.get_gradient("w1b"))
       gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
       cost_sum = 0
 
@@ -111,6 +117,7 @@ class App:
 
         f.evaluate()
         gradient_sum_w1 += f.get_gradient("w1")
+        gradient_sum_w1b += f.get_gradient("w1b")
         gradient_sum_w2 += f.get_gradient("w2")
 
         current_cost = self.cost.item((0,0))
@@ -119,6 +126,7 @@ class App:
       # Replace cost/gradient sums with averages
       current_cost = cost_sum / num_samples
       gradient_sum_w1 *= (1.0 / num_samples)
+      gradient_sum_w1b *= (1.0 / num_samples)
       gradient_sum_w2 *= (1.0 / num_samples)
 
       reps += 1
@@ -140,12 +148,16 @@ class App:
 
       m = f.get_matrix("w1").matrix()
       m += (-speed) * gradient_sum_w1
+      m = f.get_matrix("w1b").matrix()
+      m += (-speed) * gradient_sum_w1b
       m = f.get_matrix("w2").matrix()
       m += (-speed) * gradient_sum_w2
 
       if NET_SIZE <= 20:
         print "Trained w1:"
         print dm(f.get_matrix("w1").matrix())
+        print "Trained w1b:"
+        print dm(f.get_matrix("w1b").matrix())
         print "Trained w2:"
         print dm(f.get_matrix("w2").matrix())
         if reps == 12:
