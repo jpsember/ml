@@ -219,7 +219,12 @@ class Func:
     """Generate nodes to add a regularization loss for a particular (input) matrix."""
     matrix_record = self.get_matrix(matrix_name)
 
+    # Scale lambda factor by number of nodes
+    x,y = matrix_record.matrix().shape
+    lambda_factor /= (x*y)
+
     node = RegLossNode(lambda_factor)
+
     for node_list in matrix_record.get_nodes():
       for mat_node in node_list:
         self.connect(mat_node, node)

@@ -89,13 +89,13 @@ class App:
 
     # We don't need reg loss on relu matrices, since they are already proportional to the matrices they follow
     nodes = [svm_node]
+    wt = 0.1 # Scaling by number of reg loss nodes probably doesn't matter, since the exponent here dominates
+
     if TWO_LAYERS:
-      wt = 0.1 / 3
       nodes.append(f.reg_loss("w1",wt))
       nodes.append(f.reg_loss("w2",wt))
       nodes.append(f.reg_loss("w_out",wt))
     else:
-      wt = 0.1 / 2
       nodes.append(f.reg_loss("w1",wt))
       nodes.append(f.reg_loss("w_out",wt))
 
@@ -190,9 +190,9 @@ class App:
     print "Trained w1:"
     print dm(f.get_matrix("w1").matrix())
     if TWO_LAYERS:
-      print "Trained w1b:"
+      print "Trained w2:"
       print dm(f.get_matrix("w2").matrix())
-    print "Trained w2:"
+    print "Trained w_out:"
     print dm(f.get_matrix("w_out").matrix())
 
   def evaluate_accuracy(self):
