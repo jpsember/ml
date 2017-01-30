@@ -121,9 +121,7 @@ class App:
 
     reps = 0
     while not done:
-      speed = math.pow(2.0, -(reps/30.0))
-      if TWO_LAYERS:
-        speed *= 0.2
+      speed = math.pow(2.0, -(reps/30.0)) * 0.2
 
       # Iterate over all the training samples, plugging each into the function
       # and summing the cost and gradients produced
