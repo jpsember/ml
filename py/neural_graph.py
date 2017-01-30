@@ -7,8 +7,8 @@
 import numpy as np
 import math
 from func import *
+from common import *
 
-NUM_CLASSES = 3
 NET_SIZE = 100 # size of hidden layer
 
 class App:
@@ -16,7 +16,7 @@ class App:
 
   def run(self):
     np.random.seed(1965)
-    self.build_spiral_data(100,NUM_CLASSES)
+    self.train_samples,self.train_types = build_spiral_data(100,NUM_CLASSES)
     self.define_matrices()
     self.define_function()
     self.perform_gradient_descent()
@@ -25,19 +25,6 @@ class App:
     self.plot_grid_results()
     self.plot_train_samples()
     save_plot()
-
-
-  def build_spiral_data(self, points_per_class = 100, num_classes = NUM_CLASSES):
-    X = np.zeros((points_per_class*num_classes,2)) # data matrix (each row = single example)
-    y = np.zeros(points_per_class*num_classes, dtype='uint8') # class labels
-    for j in xrange(num_classes):
-      ix = range(points_per_class*j,points_per_class*(j+1))
-      r = np.linspace(0.0,1,points_per_class) # radius
-      t = np.linspace(j*4,(j+1)*4,points_per_class) + np.random.randn(points_per_class)*0.2 # theta
-      X[ix] = np.c_[r*np.sin(t), r*np.cos(t)]
-      y[ix] = j
-    self.train_samples = X
-    self.train_types = y
 
 
   def calculated_type(self):

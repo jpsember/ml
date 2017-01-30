@@ -6,6 +6,7 @@
 
 import numpy as np
 import math
+from common import *
 
 
 class App:
@@ -13,6 +14,7 @@ class App:
 
   def run(self):
     np.random.seed(1965)
+    self.train_samples,self.train_types = build_spiral_data(100,NUM_CLASSES)
 
 
 
