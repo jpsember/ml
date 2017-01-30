@@ -12,10 +12,7 @@ from common import *
 TWO_LAYERS = False
 
 # Size of hidden layer
-if TWO_LAYERS:
-  NET_SIZE = 10
-else:
-  NET_SIZE = 100
+H = 100
 
 class App:
 
@@ -54,10 +51,15 @@ class App:
     self.data = mat(data_dim,[0,0,1])
     self.data_type = mat(1,np.zeros(1))
     self.cost = mat(1,[0])
-    self.w1 = np.random.randn(data_dim, NET_SIZE)
+    output_height = H
     if TWO_LAYERS:
-      self.w2 = np.random.randn(NET_SIZE,NET_SIZE)
-    self.w_out = np.random.randn(NET_SIZE, NUM_CLASSES)
+      height_2 = H / 3
+      output_height =  H / 2
+      self.w1 = np.random.randn(data_dim, height_2)
+      self.w2 = np.random.randn(height_2,output_height)
+    else:
+      self.w1 = np.random.randn(data_dim, output_height)
+    self.w_out = np.random.randn(output_height, NUM_CLASSES)
 
 
   def define_function(self):
@@ -73,13 +75,13 @@ class App:
     f.add_output("f",self.cost)
 
     f.mult_matrix("d","w1","l1");
-    f.relu_matrix("l1","r1")
     r_out = "r1"
+    f.relu_matrix("l1",r_out)
 
     if TWO_LAYERS:
-      f.mult_matrix("r1","w2","l1b")
-      f.relu_matrix("l1b","r2")
+      f.mult_matrix(r_out,"w2","l1b")
       r_out = "r2"
+      f.relu_matrix("l1b",r_out)
 
     s = f.mult_matrix(r_out,"w_out","s")
 
@@ -126,8 +128,8 @@ class App:
       num_samples = len(self.train_samples)
       gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
       if TWO_LAYERS:
-        gradient_sum_w1b = np.zeros_like(f.get_gradient("w2"))
-      gradient_sum_w2 = np.zeros_like(f.get_gradient("w_out"))
+        gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
+      gradient_sum_w_out = np.zeros_like(f.get_gradient("w_out"))
       cost_sum = 0
 
       for train_index in range(num_samples):
@@ -139,8 +141,8 @@ class App:
         f.evaluate()
         gradient_sum_w1 += f.get_gradient("w1")
         if TWO_LAYERS:
-          gradient_sum_w1b += f.get_gradient("w2")
-        gradient_sum_w2 += f.get_gradient("w_out")
+          gradient_sum_w2 += f.get_gradient("w2")
+        gradient_sum_w_out += f.get_gradient("w_out")
 
         current_cost = self.cost.item((0,0))
         cost_sum += current_cost
@@ -149,8 +151,8 @@ class App:
       current_cost = cost_sum / num_samples
       gradient_sum_w1 *= (1.0 / num_samples)
       if TWO_LAYERS:
-        gradient_sum_w1b *= (1.0 / num_samples)
-      gradient_sum_w2 *= (1.0 / num_samples)
+        gradient_sum_w2 *= (1.0 / num_samples)
+      gradient_sum_w_out *= (1.0 / num_samples)
 
       reps += 1
 
@@ -159,7 +161,8 @@ class App:
          df(current_cost),
          df(speed))
 
-      if reps == 75:
+      # For the moment, stop after fewer reps (we still get very good results at least with single hidden layer):
+      if reps == 20:
         done = True
 
       if reps > 10:
@@ -173,11 +176,11 @@ class App:
       m += (-speed) * gradient_sum_w1
       if TWO_LAYERS:
         m = f.get_matrix("w2").matrix()
-        m += (-speed) * gradient_sum_w1b
+        m += (-speed) * gradient_sum_w2
       m = f.get_matrix("w_out").matrix()
-      m += (-speed) * gradient_sum_w2
+      m += (-speed) * gradient_sum_w_out
 
-      if NET_SIZE <= 20:
+      if H <= 20:
         self.display_parameters()
         if reps == 12:
           f.make_dotfile()
@@ -214,7 +217,7 @@ class App:
     for i in range(NUM_CLASSES):
       results.append([[],[]])
 
-    res = 70
+    res = 30
     for yi in range(res):
       y = 2 * (yi - res/2) / float(res)
       for xi in range(res):
@@ -231,7 +234,7 @@ class App:
     type = 0
     colors = ['mo','yo','co']
     for ls in self.grid_results:
-      plt.plot(ls[0],ls[1],colors[type])
+      plt.plot(ls[0],ls[1],colors[type],markersize=25)
       type += 1
 
 
