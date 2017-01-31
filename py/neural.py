@@ -41,8 +41,9 @@ class App:
       probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True) # [N x K]
 
       # compute the loss: average cross-entropy loss and regularization
-      correct_logprobs = -np.log(probs[range(num_examples),y])
-      data_loss = np.sum(correct_logprobs)/num_examples
+      training_logprops = -np.log(probs[range(num_examples),y])
+
+      data_loss = np.sum(training_logprops) / num_examples
       reg_loss = 0.5 * reg_strength * np.sum(self.W * self.W) + 0.5 * reg_strength * np.sum(self.W3 * self.W3)
       loss = data_loss + reg_loss
 
