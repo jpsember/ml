@@ -4,13 +4,11 @@
 # train it to assign colors to the 'spiral' points
 #
 
-import numpy as np
-import math
-from func import *
 from common import *
+from func import *
 
 # Size of hidden layer
-H = 25 
+H = 25
 SEED = 76
 
 class App:

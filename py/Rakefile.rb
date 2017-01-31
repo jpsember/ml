@@ -9,7 +9,7 @@ task :dotfiles => FileList.new("**/*.dot").map{|x| x.chomp("dot") + "pdf"}
 
 desc "Run program, recompile dot files"
 task :default do
-  system("neural_graph.py")
+  system("neural.py")
   Rake::Task["dotfiles"].invoke
 end
 

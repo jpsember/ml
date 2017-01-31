@@ -1,8 +1,6 @@
 # Classes for representing a function as a directed graph, with
 # ability to evaluate function's value and gradient
 
-from tools import *
-
 from node import *
 
 # Stores information about a named input or output matrix
