@@ -25,7 +25,7 @@ class App:
     X,y = self.train_samples,self.train_types
 
     self.W  = 0.01 * np.random.randn(D,H)
-    self.W2 = 0.01 * np.random.randn(H,K)
+    self.W3 = 0.01 * np.random.randn(H,K)
 
     reg_strength = 1e-3
 
@@ -33,17 +33,17 @@ class App:
     for i in xrange(4000):
 
       # evaluate class scores, [N x K]
-      hidden_layer = np.maximum(0, np.dot(X, self.W)) # note, ReLU activation
-      scores = np.dot(hidden_layer, self.W2)
+      W2 = np.maximum(0, np.dot(X, self.W)) # note, ReLU activation
+      scores = np.dot(W2, self.W3)
 
       # compute the class probabilities
       exp_scores = np.exp(scores)
       probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True) # [N x K]
 
       # compute the loss: average cross-entropy loss and regularization
-      corect_logprobs = -np.log(probs[range(num_examples),y])
-      data_loss = np.sum(corect_logprobs)/num_examples
-      reg_loss = 0.5 * reg_strength * np.sum(self.W * self.W) + 0.5 * reg_strength * np.sum(self.W2 * self.W2)
+      correct_logprobs = -np.log(probs[range(num_examples),y])
+      data_loss = np.sum(correct_logprobs)/num_examples
+      reg_loss = 0.5 * reg_strength * np.sum(self.W * self.W) + 0.5 * reg_strength * np.sum(self.W3 * self.W3)
       loss = data_loss + reg_loss
 
       if i % 1000 == 0:
@@ -56,26 +56,26 @@ class App:
 
       # backpropate the gradient to the parameters
 
-      # first backprop into parameters W2 and b2
-      dW2 = np.dot(hidden_layer.T, dscores)
+      # first backprop into parameters W3
+      dW3 = np.dot(W2.T, dscores)
 
       # next backprop into hidden layer
-      dhidden = np.dot(dscores, self.W2.T)
+      dW2 = np.dot(dscores, self.W3.T)
 
       # backprop the ReLU non-linearity
-      dhidden[hidden_layer <= 0] = 0
+      dW2[W2 <= 0] = 0
 
       # finally into W
-      dW = np.dot(X.T, dhidden)
+      dW = np.dot(X.T, dW2)
 
       # add regularization gradient contribution
-      dW2 += reg_strength * self.W2
+      dW3 += reg_strength * self.W3
       dW += reg_strength * self.W
 
       # perform a parameter update
       step_size = 1.0
       self.W += -step_size * dW
-      self.W2 += -step_size * dW2
+      self.W3 += -step_size * dW3
 
 
   def generate_samples(self):
@@ -86,8 +86,8 @@ class App:
 
   def evaluate_training_set_accuracy(self):
     X,y = self.train_samples, self.train_types
-    hidden_layer = np.maximum(0, np.dot(X, self.W))
-    scores = np.dot(hidden_layer, self.W2)
+    W2 = np.maximum(0, np.dot(X, self.W))
+    scores = np.dot(W2, self.W3)
     predicted_class = np.argmax(scores, axis=1)
     print 'training accuracy: %s' % df(np.mean(predicted_class == y))
 
