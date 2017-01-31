@@ -24,16 +24,11 @@ class App:
   def perform_training(self):
     X,y = self.train_samples,self.train_types
 
-    self.W = 0.01 * np.random.randn(D,H)
+    self.W  = 0.01 * np.random.randn(D,H)
     self.W2 = 0.01 * np.random.randn(H,K)
 
-    # some hyperparameters
-    step_size = 1e-0
+    reg_strength = 1e-3
 
-    # regularization strength
-    reg = 1e-3
-
-    # gradient descent loop
     num_examples = X.shape[0]
     for i in xrange(4000):
 
@@ -48,8 +43,9 @@ class App:
       # compute the loss: average cross-entropy loss and regularization
       corect_logprobs = -np.log(probs[range(num_examples),y])
       data_loss = np.sum(corect_logprobs)/num_examples
-      reg_loss = 0.5*reg*np.sum(self.W*self.W) + 0.5*reg*np.sum(self.W2*self.W2)
+      reg_loss = 0.5 * reg_strength * np.sum(self.W * self.W) + 0.5 * reg_strength * np.sum(self.W2 * self.W2)
       loss = data_loss + reg_loss
+
       if i % 1000 == 0:
         print "iteration %d: loss %s" % (i, df(loss))
 
@@ -59,20 +55,25 @@ class App:
       dscores /= num_examples
 
       # backpropate the gradient to the parameters
+
       # first backprop into parameters W2 and b2
       dW2 = np.dot(hidden_layer.T, dscores)
+
       # next backprop into hidden layer
       dhidden = np.dot(dscores, self.W2.T)
+
       # backprop the ReLU non-linearity
       dhidden[hidden_layer <= 0] = 0
+
       # finally into W
       dW = np.dot(X.T, dhidden)
 
       # add regularization gradient contribution
-      dW2 += reg * self.W2
-      dW += reg * self.W
+      dW2 += reg_strength * self.W2
+      dW += reg_strength * self.W
 
       # perform a parameter update
+      step_size = 1.0
       self.W += -step_size * dW
       self.W2 += -step_size * dW2
 
