@@ -10,22 +10,23 @@ from func import *
 from common import *
 
 # Size of hidden layer
-H = 100
+H = 25 
+SEED = 76
 
 class App:
 
 
   def run(self):
-    np.random.seed(1972)
-    self.train_samples,self.train_types = build_spiral_data(100,NUM_CLASSES)
+    np.random.seed(SEED)
+    self.train_samples,self.train_types = build_spiral_data(50,NUM_CLASSES)
     self.define_matrices()
     self.define_function()
     self.perform_gradient_descent()
-    self.evaluate_accuracy()
+    accuracy = self.evaluate_accuracy()
     self.apply_function_to_grid()
     self.plot_grid_results()
     self.plot_train_samples()
-    save_plot()
+    save_plot("plot_"+str(H)+"_"+str(SEED)+"_"+df(accuracy)+".pdf")
 
 
   def calculated_type(self):
@@ -100,7 +101,7 @@ class App:
 
     reps = 0
     while not done:
-      speed = math.pow(2.0, -(reps/30.0))
+      speed = math.pow(2.0, -(reps/100.0))
 
       # Iterate over all the training samples, plugging each into the function
       # and summing the cost and gradients produced
@@ -134,7 +135,7 @@ class App:
          df(current_cost * 100),
          df(speed))
 
-      if reps == 75:
+      if reps == 1000:
         done = True
 
       if reps > 10:
@@ -149,7 +150,7 @@ class App:
       m = f.get_matrix("w_out").matrix()
       m += (-speed) * gradient_sum_w_out
 
-      if H <= 20:
+      if False and H <= 20:
         self.display_parameters()
         if reps == 12:
           f.make_dotfile()
@@ -174,7 +175,9 @@ class App:
       eval_type = self.calculated_type()
       if self.train_types[i] == eval_type:
         correct_count += 1
-    print "Accuracy:",df(correct_count / float(n_samples))
+    accuracy = correct_count / float(n_samples)
+    print "Accuracy:",df(accuracy)
+    return accuracy
 
 
   def apply_function_to_grid(self):
