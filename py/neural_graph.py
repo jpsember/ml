@@ -9,8 +9,6 @@ import math
 from func import *
 from common import *
 
-TWO_LAYERS = True
-
 # Size of hidden layer
 H = 100
 
@@ -18,7 +16,7 @@ class App:
 
 
   def run(self):
-    np.random.seed(1965)
+    np.random.seed(1972)
     self.train_samples,self.train_types = build_spiral_data(100,NUM_CLASSES)
     self.define_matrices()
     self.define_function()
@@ -52,14 +50,7 @@ class App:
     self.data_type = mat(1,np.zeros(1))
     self.cost = mat(1,[0])
     output_height = H
-    if TWO_LAYERS:
-      height_2 = 10
-      output_height =  8
-      self.w1 = np.random.randn(data_dim, height_2)
-      self.w2 = np.random.randn(height_2,height_2)
-      self.w3 = np.random.randn(height_2,output_height)
-    else:
-      self.w1 = np.random.randn(data_dim, output_height)
+    self.w1 = np.random.randn(data_dim, output_height)
     self.w_out = np.random.randn(output_height, NUM_CLASSES)
 
 
@@ -69,9 +60,6 @@ class App:
     f.add_data("d",self.data)
     f.add_data("y",self.data_type)
     f.add_input("w1",self.w1)
-    if TWO_LAYERS:
-      f.add_input("w2",self.w2)
-      f.add_input("w3",self.w3)
     f.add_input("w_out",self.w_out)
 
     f.add_output("f",self.cost)
@@ -79,15 +67,6 @@ class App:
     f.mult_matrix("d","w1","l1");
     r_out = "r1"
     f.relu_matrix("l1",r_out)
-
-    if TWO_LAYERS:
-      f.mult_matrix(r_out,"w2","l2")
-      r_out = "r2"
-      f.relu_matrix("l2",r_out)
-
-      f.mult_matrix(r_out,"w3","l3")
-      r_out = "r3"
-      f.relu_matrix("l3",r_out)
 
     s = f.mult_matrix(r_out,"w_out","s")
 
@@ -97,16 +76,9 @@ class App:
 
     # We don't need reg loss on relu matrices, since they are already proportional to the matrices they follow
     nodes = [svm_node]
-    wt = 0.1 # Scaling by number of reg loss nodes probably doesn't matter, since the exponent here dominates
-
-    if TWO_LAYERS:
-      nodes.append(f.reg_loss("w1",wt))
-      nodes.append(f.reg_loss("w2",wt))
-      nodes.append(f.reg_loss("w3",wt))
-      nodes.append(f.reg_loss("w_out",wt))
-    else:
-      nodes.append(f.reg_loss("w1",wt))
-      nodes.append(f.reg_loss("w_out",wt))
+    wt = 0.001
+    nodes.append(f.reg_loss("w1",wt))
+    nodes.append(f.reg_loss("w_out",wt))
 
     f.connect(f.add(*nodes),f.elem("f"))
 
@@ -128,15 +100,12 @@ class App:
 
     reps = 0
     while not done:
-      speed = math.pow(2.0, -(reps/30.0)) * 0.2
+      speed = math.pow(2.0, -(reps/30.0))
 
       # Iterate over all the training samples, plugging each into the function
       # and summing the cost and gradients produced
       num_samples = len(self.train_samples)
       gradient_sum_w1 = np.zeros_like(f.get_gradient("w1"))
-      if TWO_LAYERS:
-        gradient_sum_w2 = np.zeros_like(f.get_gradient("w2"))
-        gradient_sum_w3 = np.zeros_like(f.get_gradient("w3"))
       gradient_sum_w_out = np.zeros_like(f.get_gradient("w_out"))
       cost_sum = 0
 
@@ -148,9 +117,6 @@ class App:
 
         f.evaluate()
         gradient_sum_w1 += f.get_gradient("w1")
-        if TWO_LAYERS:
-          gradient_sum_w2 += f.get_gradient("w2")
-          gradient_sum_w3 += f.get_gradient("w3")
         gradient_sum_w_out += f.get_gradient("w_out")
 
         current_cost = self.cost.item((0,0))
@@ -159,16 +125,13 @@ class App:
       # Replace cost/gradient sums with averages
       current_cost = cost_sum / num_samples
       gradient_sum_w1 *= (1.0 / num_samples)
-      if TWO_LAYERS:
-        gradient_sum_w2 *= (1.0 / num_samples)
-        gradient_sum_w3 *= (1.0 / num_samples)
       gradient_sum_w_out *= (1.0 / num_samples)
 
       reps += 1
 
       pr("Rep: %2d Cost:%s Speed:%s\n",
          reps,
-         df(current_cost),
+         df(current_cost * 100),
          df(speed))
 
       if reps == 75:
@@ -183,11 +146,6 @@ class App:
 
       m = f.get_matrix("w1").matrix()
       m += (-speed) * gradient_sum_w1
-      if TWO_LAYERS:
-        m = f.get_matrix("w2").matrix()
-        m += (-speed) * gradient_sum_w2
-        m = f.get_matrix("w3").matrix()
-        m += (-speed) * gradient_sum_w3
       m = f.get_matrix("w_out").matrix()
       m += (-speed) * gradient_sum_w_out
 
@@ -203,11 +161,6 @@ class App:
     f = self.f
     print "Trained w1:"
     print dm(f.get_matrix("w1").matrix())
-    if TWO_LAYERS:
-      print "Trained w2:"
-      print dm(f.get_matrix("w2").matrix())
-      print "Trained w3:"
-      print dm(f.get_matrix("w3").matrix())
     print "Trained w_out:"
     print dm(f.get_matrix("w_out").matrix())
 
