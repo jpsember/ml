@@ -126,7 +126,7 @@ class App:
 
       # Use a list comprehension... is there a better way?
 
-      res = [max(0,
+      loss_components = [max(0,
          score_for_type             # score from function
          - src_row[types[row_num]]  # true score for sample
           + 1
@@ -135,7 +135,8 @@ class App:
       # Subtract additional 1.0 since we've included loss for the sample's true type,
       # which we actually want to exclude
 
-      svm_loss[row_num] = sum(res) - 1.0
+      svm_loss[row_num] = sum(loss_components) - 1.0
+
 
     print "SVM loss:\n",svm_loss
 
