@@ -16,6 +16,9 @@ class App:
 
   def run(self):
     np.random.seed(SEED)
+
+    self.experiment(); return
+
     self.generate_samples()
     self.perform_training()
     self.evaluate_training_set_accuracy()
@@ -91,6 +94,51 @@ class App:
     scores = np.dot(W2, self.W3)
     predicted_class = np.argmax(scores, axis=1)
     print 'training accuracy: %s' % df(np.mean(predicted_class == y))
+
+
+  def rand_mat(self, rows, cols=1, mag=8):
+    """Generate matrix of random floats, snapped to integer values"""
+    m = (np.random.rand(rows,cols) * mag)
+    return np.floor(m)
+
+
+
+  def experiment(self):
+
+    num_samples = 6
+    k = 4
+
+    m = self.rand_mat(num_samples,k)
+    print "Samples:\n",m
+
+    types = self.rand_mat(num_samples,1,k).astype(int)
+    print "Types:\n",types
+
+
+    # Generate Multiclass Support Vector Machine (SVM) loss
+
+    # Pre-allocate matrix... unnecessary optimization?
+    #
+    svm_loss = np.empty([num_samples,1])
+
+    for row_num in range(num_samples):
+      src_row = m[row_num]
+
+      # Use a list comprehension... is there a better way?
+
+      res = [max(0,
+         score_for_type             # score from function
+         - src_row[types[row_num]]  # true score for sample
+          + 1
+        ) for score_for_type in src_row]
+
+      # Subtract additional 1.0 since we've included loss for the sample's true type,
+      # which we actually want to exclude
+
+      svm_loss[row_num] = sum(res) - 1.0
+
+    print "SVM loss:\n",svm_loss
+
 
 
 
