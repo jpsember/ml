@@ -14,6 +14,7 @@ public class Main extends App {
     loadTools();
     SystemUtil.setConsoleAppFlag(true);
     App app = new Main();
+    //app.setCustomArgs("-v genimages");
     app.startApplication(args);
     app.exitWithReturnCode();
   }
