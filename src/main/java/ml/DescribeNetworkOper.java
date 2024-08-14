@@ -23,7 +23,7 @@ public class DescribeNetworkOper extends AppOper {
   }
 
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "describe convolutional neural network architecture";
   }
 

@@ -22,7 +22,7 @@ public class EvalModelOper extends AppOper {
   }
 
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "Evaluate training results by plotting training snapshot";
   }
 

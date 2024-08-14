@@ -44,12 +44,12 @@ public class GenerateImageSetOper extends AppOper {
   }
 
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "Generate annotated images procedurally";
   }
 
   @Override
-  protected void getOperSpecificHelp(BasePrinter b) {
+  protected void longHelp(BasePrinter b) {
     b.pr("Procedurally generates a set of images.");
   }
 

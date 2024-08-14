@@ -16,7 +16,7 @@ public class FeedOper extends AppOper {
   }
 
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "Investigate strategies for feeding training data to Python code";
   }
 

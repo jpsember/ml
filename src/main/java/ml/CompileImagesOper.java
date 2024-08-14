@@ -41,12 +41,12 @@ public final class CompileImagesOper extends AppOper {
   }
 
   @Override
-  public String getHelpDescription() {
+  public String shortHelp() {
     return "Compile sets of training or testing images";
   }
 
   @Override
-  protected void getOperSpecificHelp(BasePrinter b) {
+  protected void longHelp(BasePrinter b) {
     b.pr(userCommand(), " --- todo: fill out additional help info");
   }
 
