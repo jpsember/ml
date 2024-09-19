@@ -421,7 +421,7 @@ class JsTrain:
   def restore_checkpoint(self):
     _, path = self.most_recent_checkpoint()
     if path:
-      checkpoint = torch.load(path)
+      checkpoint = torch.load(path, weights_only = True) # Added weights_only = True to avoid warning
       self.model.load_state_dict(checkpoint['model_state_dict'])
       self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
       self.epoch_number = checkpoint['epoch']

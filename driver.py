@@ -4,10 +4,9 @@
 #
 
 import platform
+print("driver.py, version:")
 print(platform.python_version())
 
-### I needed to run this command on my mac:
-###  pip3 install jstyleson
 
 
 from pycore.base import *

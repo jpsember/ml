@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 
+
+# Install these dependencies if necessary:
+#
+#  pip3 install json-with-comments torch numpy
+#
 import re
 import os
 import time
 import traceback
 import json
-import jstyleson   # pip install jstyleson
+import jsonc      # pip3 install json-with-comments
 import inspect
 
 
 # Define some constants
 #
-from torch import Tensor
+from torch import Tensor  # pip3 install torch
 
 BYTES_PER_FLOAT = 4
 BYTES_PER_INT = 4
@@ -578,7 +583,7 @@ def txt_read(path, defcontents=None):
 def json_read(path, strip_comments=True):
   content = txt_read(path)
   if strip_comments:
-    return jstyleson.loads(content)
+    return jsonc.loads(content)
   return json.loads(content)
 
 def txt_write(path, contents):

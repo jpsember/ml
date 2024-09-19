@@ -12,7 +12,7 @@ public class Main extends App {
 
   public static void main(String[] args) {
     loadTools();
-    SystemUtil.setConsoleAppFlag(true);
+    SystemUtil.prepareForConsoleOrGUI(true);
     App app = new Main();
     //app.setCustomArgs("-v genimages");
     app.startApplication(args);
