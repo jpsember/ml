@@ -10,8 +10,9 @@ print(platform.python_version())
 
 
 from pycore.base import *
-from example_classifier.classifier_train import ClassifierTrain
-from example_classifier.classifier_inference import ClassifierInference
+pr("====== using classifier_micro here, until I figure out a better way")
+from example_classifier_micro.classifier_train import ClassifierTrain
+from example_classifier_micro.classifier_inference import ClassifierInference
 from example_yolo.yolo_train import YoloTrain
 from example_yolo.yolo_inference import YoloInference
 
