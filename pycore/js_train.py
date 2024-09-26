@@ -36,6 +36,8 @@ class JsTrain:
 
     script_path = os.path.realpath(model_specific_script_file)
     self.cached_proj_path = os.path.dirname(script_path)
+    pr("cached_proj_path set to:",self.cached_proj_path)
+    pr("model specific script file:",model_specific_script_file)
 
     t = self.proj_path("train_info")
     JG.train_param = read_object(TrainParam.default_instance, os.path.join(t, "train_param.json"))
@@ -86,7 +88,9 @@ class JsTrain:
   def proj_path(self, rel_path : str):
     if self.cached_proj_path is None:
       return rel_path
-    return os.path.join(self.cached_proj_path, rel_path)
+    x = os.path.join(self.cached_proj_path, rel_path)
+    pr("proj_path for rel path:",rel_path,"is:",x)
+    return x
 
 
   def prepare_pytorch(self):
