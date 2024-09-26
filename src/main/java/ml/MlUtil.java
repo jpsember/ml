@@ -1,5 +1,8 @@
 package ml;
 
+import static js.base.Tools.*;
+
+import java.io.File;
 import java.util.Random;
 
 public final class MlUtil {
@@ -15,5 +18,20 @@ public final class MlUtil {
       seed = (int) System.currentTimeMillis();
     return new Random(seed);
   }
+
+  // ------------------------------------------------------------------
+  // Training directory (a ram disk, presumably)
+  // ------------------------------------------------------------------
+
+  public static File trainDir() {
+    if (sTrainDir == null) {
+      sTrainDir = new File("/Volumes/ml_disk");
+      if (!sTrainDir.isDirectory())
+        badState("Cannot find train directory:", sTrainDir, "; run create_ramdisk.sh script first?");
+    }
+    return sTrainDir;
+  }
+
+  private static File sTrainDir;
 
 }

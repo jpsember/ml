@@ -1,6 +1,7 @@
 package ml;
 
 import static js.base.Tools.*;
+import static ml.MlUtil.*;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -200,8 +201,8 @@ public final class CompileImagesOper extends AppOper {
     files().deletePeacefully(stopSignalFile());
 
     // Delete existing training set subdirectories, or any temporary file associated with them
-    if (trainParam().targetDirTrain().isDirectory()) {
-      DirWalk w = new DirWalk(trainParam().targetDirTrain()).includeDirectories().withRecurse(false);
+    if (trainDir().isDirectory()) {
+      DirWalk w = new DirWalk(trainDir()).includeDirectories().withRecurse(false);
       for (File f : w.files()) {
         if (!f.isDirectory()) {
           // If it is a python logging file (.json, .tmp, .dat), or a python command file, delete it
@@ -231,7 +232,7 @@ public final class CompileImagesOper extends AppOper {
 
     // Choose a temporary filename that can be atomically renamed when it is complete
     //
-    File tempDir = new File(trainParam().targetDirTrain(), "_temp_");
+    File tempDir = new File(trainDir(), "_temp_");
     Files.assertDoesNotExist(tempDir, "Found old directory; need to prepare?");
     long startServiceTime = System.currentTimeMillis();
 
@@ -270,7 +271,7 @@ public final class CompileImagesOper extends AppOper {
       //
       File newDir = null;
       while (true) {
-        newDir = new File(trainParam().targetDirTrain(), STREAM_PREFIX + mNextStreamSetNumber);
+        newDir = new File(trainDir(), STREAM_PREFIX + mNextStreamSetNumber);
         mNextStreamSetNumber++;
         checkState(!newDir.exists(), "Stream directory already exists; need to prepare?", newDir);
         break;
@@ -310,7 +311,7 @@ public final class CompileImagesOper extends AppOper {
    */
   private int countTrainSets() {
     int count = 0;
-    DirWalk w = new DirWalk(trainParam().targetDirTrain()).includeDirectories().withRecurse(false);
+    DirWalk w = new DirWalk(trainDir()).includeDirectories().withRecurse(false);
     for (File f : w.files()) {
       if (f.isDirectory() && f.getName().startsWith(STREAM_PREFIX))
         count++;
@@ -372,8 +373,9 @@ public final class CompileImagesOper extends AppOper {
   }
 
   private LogProcessor lp() {
-    if (mLogProcessor == null)
+    if (mLogProcessor == null) {
       mLogProcessor = new LogProcessor();
+    }
     return mLogProcessor;
   }
 
@@ -388,11 +390,11 @@ public final class CompileImagesOper extends AppOper {
   }
 
   private File sigFile() {
-    return new File(trainParam().targetDirTrain(), "sig.txt");
+    return new File(trainDir(), "sig.txt");
   }
 
   private File stopSignalFile() {
-    return new File(trainParam().targetDirTrain(), "stop.txt");
+    return new File(trainDir(), "stop.txt");
   }
 
   //------------------------------------------------------------------
@@ -537,8 +539,7 @@ public final class CompileImagesOper extends AppOper {
   private void sendCommand(CmdItem.Builder cmdItem) {
     mOutCommandId++;
     cmdItem.id(mOutCommandId);
-    File cmdFile = new File(trainParam().targetDirTrain(),
-        String.format("cmd_%07d." + PYTHON_CMD_EXT, cmdItem.id()));
+    File cmdFile = new File(trainDir(), String.format("cmd_%07d." + PYTHON_CMD_EXT, cmdItem.id()));
     File tmpFile = Files.addTempSuffix(cmdFile);
     Files.assertDoesNotExist(cmdFile, "sendCommand file");
     Files.assertDoesNotExist(tmpFile, "sendCommand temporary file");

@@ -48,7 +48,9 @@ class JsTrain:
     self.img_height = t.height
     self.img_channels = t.depth
 
-    self.train_data_path = self.proj_path(JG.train_param.target_dir_train)
+    self.train_data_path = self.proj_path("/Volumes/ml_disk")
+    pr("train_data_path set to:",self.train_data_path)
+    # self.train_data_path = self.proj_path(JG.train_param.target_dir_train)
 
     # This information is not available until we have a training set to examine:
     #
