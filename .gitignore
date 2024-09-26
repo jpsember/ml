@@ -30,14 +30,6 @@ _SKIP_*
 #
 target
 
-# Generated data classes
-#
-src/main/java/gen
-
-# Generated Python data classes
-#
-/gen
-
 checkpoints
 generated_images
 inspection

@@ -1,0 +1,9 @@
+package gen;
+
+public enum CompileOper {
+
+  UNKNOWN, PREPARE_TRAIN, TRAIN_SERVICE, COMPILE_INFERENCE_IMAGES, PROCESS_INFERENCE_RESULT;
+
+  public static final CompileOper DEFAULT_INSTANCE = UNKNOWN;
+
+}
