@@ -386,7 +386,7 @@ public class GenerateImageSetOper extends AppOper {
       addFont("Dialog");
       addFont("DialogInput");
       addFont("Monospaced");
-      //      addFont("SansSerif");
+      addFont("SansSerif");
     }
     return mFonts;
   }
