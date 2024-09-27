@@ -13,7 +13,7 @@ class TensorLogger:
 
   default_instance: TensorLogger = None
 
-  def __init__(self, directory:str = "train_data"):
+  def __init__(self, directory:str = ml_disk()):
     self.dir = directory
     self.id = 0
     self.report_count = 0

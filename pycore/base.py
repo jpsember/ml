@@ -773,6 +773,10 @@ def read_object(abstract_data_class_prototype, path):
   return abstract_data_class_prototype.parse(content)
 
 
+def ml_disk():
+  return "/Volumes/ml_disk"
+
+
 class AbstractData:
   """
   Base class for generated types, as well as BaseObject
