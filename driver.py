@@ -4,14 +4,8 @@
 #
 
 import platform
-print("driver.py, version:")
-print(platform.python_version())
-
-
 
 from pycore.base import *
-
-pr("The project is HARD CODED here, which is error prone")
 
 from example_classifier.classifier_train import ClassifierTrain
 from example_classifier.classifier_inference import ClassifierInference
